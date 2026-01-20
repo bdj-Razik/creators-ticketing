@@ -48,6 +48,8 @@ trait HasTicketPermissions
                 'can_view_internal_notes' => $dept->can_view_internal_notes,
                 'can_manage_automations' => $dept->can_manage_automations,
                 'can_view_automation_logs' => $dept->can_view_automation_logs,
+                'can_manage_spam_filters' => $dept->can_manage_spam_filters ?? false,
+                'can_view_spam_logs' => $dept->can_view_spam_logs ?? false,
             ];
         }
 

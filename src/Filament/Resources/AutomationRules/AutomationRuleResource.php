@@ -29,7 +29,6 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Forms\Components\Placeholder;
-use Filament\Schemas\Components\Component;
 use Filament\Tables\Filters\TernaryFilter;
 use daacreators\CreatorsTicketing\Models\Form;
 use Filament\Schemas\Components\Utilities\Set;
@@ -58,6 +57,11 @@ class AutomationRuleResource extends Resource
    public static function canViewAny(): bool
     {
         return static::userCan('can_manage_automations');
+    }
+
+    public static function canAccess(array $parameters = []): bool
+    {
+        return static::canViewAny();
     }
 
     public static function shouldRegisterNavigation(): bool
@@ -374,7 +378,7 @@ public static function table(Table $table): Table
                 ->falseLabel(__('creators-ticketing::resources.form.filters.inactive_only'))
                 ->native(false),
         ])
-        ->actions([
+        ->recordActions([
             EditAction::make(),
             Action::make('view_logs')
                 ->label(__('creators-ticketing::resources.logs.title'))
@@ -382,7 +386,6 @@ public static function table(Table $table): Table
                 ->modalHeading(__('creators-ticketing::resources.logs.title'))
                 ->modalWidth('5xl')
                 ->slideOver()
-                ->modalActions([])
                 ->authorize(fn (): bool => static::userCan('can_view_automation_logs'))
                 ->mountUsing(function ($form, $record) {
                     $form->fill([
@@ -416,7 +419,7 @@ public static function table(Table $table): Table
                             ->toArray()
                     ]);
                 })
-                ->form([
+                ->schema([
                     Repeater::make('logs')
                         ->label('')
                         ->hiddenLabel()
@@ -481,7 +484,7 @@ public static function table(Table $table): Table
                 ->color(fn ($record) => $record->is_active ? 'warning' : 'success')
                 ->action(fn ($record) => $record->update(['is_active' => !$record->is_active])),
         ])
-        ->bulkActions([
+        ->toolbarActions([
             BulkActionGroup::make([
                 DeleteBulkAction::make(),
                 BulkAction::make('activate')

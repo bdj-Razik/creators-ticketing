@@ -83,7 +83,7 @@ class AutomationLogsRelationManager extends RelationManager
                     ->falseLabel(__('creators-ticketing::resources.logs.failed')),
             ])
             ->headerActions([])
-            ->actions([
+            ->recordActions([
                 ViewAction::make()
                     ->label(__('creators-ticketing::resources.logs.view_details'))
                     ->slideOver()
@@ -103,7 +103,7 @@ class AutomationLogsRelationManager extends RelationManager
                         return $data;
                     }),
             ])
-            ->bulkActions([])
+            ->toolbarActions([])
             ->defaultSort('created_at', 'desc');
     }
 

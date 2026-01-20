@@ -764,7 +764,7 @@ class TicketResource extends Resource
                     ->options(TicketPriority::class)
                     ->preload(),
             ])
-            ->actions([
+            ->recordActions([
                 ViewAction::make(),
                 Action::make('assign')
                     ->label(__('creators-ticketing::resources.ticket.actions.assign'))
@@ -860,7 +860,7 @@ class TicketResource extends Resource
                             ->send();
                     }),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make()
                         ->visible(fn () => 

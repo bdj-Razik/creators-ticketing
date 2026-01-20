@@ -98,6 +98,12 @@ class AgentsRelationManager extends RelationManager
                 IconColumn::make('pivot.can_view_automation_logs')
                     ->label(__('creators-ticketing::resources.agent.columns.view_automation_logs'))
                     ->boolean(),
+                IconColumn::make('pivot.can_manage_spam_filters')
+                    ->label(__('creators-ticketing::resources.agent.columns.manage_spam'))
+                    ->boolean(),
+                IconColumn::make('pivot.can_view_spam_logs')
+                    ->label(__('creators-ticketing::resources.agent.columns.view_spam_logs'))
+                    ->boolean(),
                 IconColumn::make('pivot.can_delete_tickets')
                     ->label(__('creators-ticketing::resources.agent.columns.delete'))
                     ->boolean(),
@@ -167,6 +173,8 @@ class AgentsRelationManager extends RelationManager
                                         $set('can_view_internal_notes', true);
                                         $set('can_manage_automations', true);
                                         $set('can_view_automation_logs', true);
+                                        $set('can_manage_spam_filters', true);
+                                        $set('can_view_spam_logs', true);
                                     } elseif ($state === 'editor') {
                                         $set('can_create_tickets', false);
                                         $set('can_view_all_tickets', true);
@@ -180,6 +188,8 @@ class AgentsRelationManager extends RelationManager
                                         $set('can_view_internal_notes', true);
                                         $set('can_manage_automations', true);
                                         $set('can_view_automation_logs', false);
+                                        $set('can_manage_spam_filters', false);
+                                        $set('can_view_spam_logs', false);
                                     } elseif ($state === 'agent') {
                                         $set('can_create_tickets', false);
                                         $set('can_view_all_tickets', false);
@@ -193,6 +203,8 @@ class AgentsRelationManager extends RelationManager
                                         $set('can_view_internal_notes', true);
                                         $set('can_manage_automations', false);
                                         $set('can_view_automation_logs', false);
+                                        $set('can_manage_spam_filters', false);
+                                        $set('can_view_spam_logs', false);
                                     }
                                 })
                                 ->required(),
@@ -232,6 +244,12 @@ class AgentsRelationManager extends RelationManager
                                     Toggle::make('can_view_automation_logs')
                                         ->label(__('creators-ticketing::resources.agent.permissions.can_view_automation_logs'))
                                         ->helperText(__('creators-ticketing::resources.agent.permissions.can_view_automation_logs_helper')),
+                                    Toggle::make('can_manage_spam_filters')
+                                        ->label(__('creators-ticketing::resources.agent.permissions.can_manage_spam_filters'))
+                                        ->helperText(__('creators-ticketing::resources.agent.permissions.can_manage_spam_filters_helper')),
+                                    Toggle::make('can_view_spam_logs')
+                                        ->label(__('creators-ticketing::resources.agent.permissions.can_view_spam_logs'))
+                                        ->helperText(__('creators-ticketing::resources.agent.permissions.can_view_spam_logs_helper')),
                                     Toggle::make('can_delete_tickets')
                                         ->label(__('creators-ticketing::resources.agent.permissions.can_delete_tickets'))
                                         ->helperText(__('creators-ticketing::resources.agent.permissions.can_delete_tickets_helper')),
@@ -274,6 +292,8 @@ class AgentsRelationManager extends RelationManager
                                 'can_view_internal_notes',
                                 'can_manage_automations',
                                 'can_view_automation_logs',
+                                'can_manage_spam_filters',
+                                'can_view_spam_logs',
                             ];
 
                             foreach ($newAgentIds as $userId) {
@@ -296,7 +316,7 @@ class AgentsRelationManager extends RelationManager
                         ->modalHeading(__('creators-ticketing::resources.agent.add_agents'))
                         ->modalSubmitActionLabel(__('creators-ticketing::resources.agent.add_submit')),
             ])
-            ->actions([
+            ->recordActions([
                 EditAction::make()
                     ->form(function (Model $record) {
                         return [
@@ -323,6 +343,8 @@ class AgentsRelationManager extends RelationManager
                                         $set('can_view_internal_notes', true);
                                         $set('can_manage_automations', true);
                                         $set('can_view_automation_logs', true);
+                                        $set('can_manage_spam_filters', true);
+                                        $set('can_view_spam_logs', true);
                                     } elseif ($state === 'editor') {
                                         $set('can_create_tickets', false);
                                         $set('can_view_all_tickets', true);
@@ -336,6 +358,8 @@ class AgentsRelationManager extends RelationManager
                                         $set('can_view_internal_notes', true);
                                         $set('can_manage_automations', true);
                                         $set('can_view_automation_logs', false);
+                                        $set('can_manage_spam_filters', false);
+                                        $set('can_view_spam_logs', false);
                                     } elseif ($state === 'agent') {
                                         $set('can_create_tickets', false);
                                         $set('can_view_all_tickets', false);
@@ -349,6 +373,8 @@ class AgentsRelationManager extends RelationManager
                                         $set('can_view_internal_notes', true);
                                         $set('can_manage_automations', false);
                                         $set('can_view_automation_logs', false);
+                                        $set('can_manage_spam_filters', false);
+                                        $set('can_view_spam_logs', false);
                                     }
                                 })
                                 ->required(),
@@ -397,6 +423,12 @@ class AgentsRelationManager extends RelationManager
                                     Toggle::make('can_view_automation_logs')
                                         ->label(__('creators-ticketing::resources.agent.permissions.can_view_automation_logs'))
                                         ->default($record->pivot->can_view_automation_logs),
+                                    Toggle::make('can_manage_spam_filters')
+                                        ->label(__('creators-ticketing::resources.agent.permissions.can_manage_spam_filters'))
+                                        ->default($record->pivot->can_manage_spam_filters ?? false),
+                                    Toggle::make('can_view_spam_logs')
+                                        ->label(__('creators-ticketing::resources.agent.permissions.can_view_spam_logs'))
+                                        ->default($record->pivot->can_view_spam_logs ?? false),
                                     Toggle::make('can_delete_tickets')
                                         ->label(__('creators-ticketing::resources.agent.permissions.can_delete_tickets'))
                                         ->default($record->pivot->can_delete_tickets)
@@ -420,6 +452,8 @@ class AgentsRelationManager extends RelationManager
                             'can_view_internal_notes' => $data['can_view_internal_notes'],
                             'can_manage_automations' => $data['can_manage_automations'],
                             'can_view_automation_logs' => $data['can_view_automation_logs'],
+                            'can_manage_spam_filters' => $data['can_manage_spam_filters'] ?? false,
+                            'can_view_spam_logs' => $data['can_view_spam_logs'] ?? false,
                         ]);
                         Notification::make()
                             ->success()
@@ -428,7 +462,7 @@ class AgentsRelationManager extends RelationManager
                     }),
                 DetachAction::make(),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 BulkActionGroup::make([
                     DetachBulkAction::make(),
                 ]),

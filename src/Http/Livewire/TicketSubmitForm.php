@@ -11,6 +11,7 @@ use daacreators\CreatorsTicketing\Models\Department;
 use daacreators\CreatorsTicketing\Models\TicketStatus;
 use daacreators\CreatorsTicketing\Events\TicketCreated;
 use daacreators\CreatorsTicketing\Support\TicketFileHelper;
+use daacreators\CreatorsTicketing\Services\SpamFilterService;
 
 class TicketSubmitForm extends Component
 {
@@ -257,6 +258,15 @@ class TicketSubmitForm extends Component
 
     public function submit()
     {
+
+        $spamService = app(SpamFilterService::class);
+        $spamCheck = $spamService->checkTicket($this->custom_fields, auth()->user());
+        
+        if (!$spamCheck['allowed']) {
+            session()->flash('error', $spamCheck['reason'] ?? 'Your submission was blocked by spam filters.');
+            return;
+        }
+
         $maxTickets = config('creators-ticketing.max_open_tickets_per_user');
             
         if ($maxTickets && $maxTickets > 0) {

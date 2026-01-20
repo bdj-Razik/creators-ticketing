@@ -67,12 +67,12 @@ class FieldsRelationManager extends RelationManager
                 CreateAction::make()
                     ->form($this->getFieldForm()),
             ])
-            ->actions([
+            ->recordActions([
                 EditAction::make()
                     ->form($this->getFieldForm()),
                 DeleteAction::make(),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),

@@ -6,6 +6,13 @@
 
 A robust and dynamic ticketing system plugin for Filament 4, providing a complete helpdesk solution for your Laravel application.
 
+---
+
+### Need a Helpdesk for Your Shopify Store?
+<img src="screenshots/hepdesk-logo.png" alt="Creators Helpdesk" height="80" style="vertical-align: middle;"> **[Creators Helpdesk](https://apps.shopify.com/daacreators-helpdesk)** – A modern, lightweight helpdesk for Shopify merchants. Try it free for 14 days.
+
+---
+
 ## Screenshots
 
 ![Tickets List](screenshots/tickets.png)
@@ -39,6 +46,7 @@ A robust and dynamic ticketing system plugin for Filament 4, providing a complet
 - Granular permission system
 - Read/Unread status indicators for agents
 - File attachments support
+- **Advanced spam protection system**
 - Responsive design
 - Multi-language support
 - Event system for extensibility
@@ -114,8 +122,8 @@ The seeder uses `updateOrCreate` to prevent duplicates, so you can safely run it
 
 ## Upgrading
 
-### Upgrading from v1.1.4 to v1.1.5
-**⚠️ Important:** Version v1.1.5 and introduces new fields to the database table. If you are upgrading from a previous version, you **must** run the migrations after updating the package to ensure the system functions correctly:
+### Upgrading from v1.1.8 to v1.1.9
+**⚠️ Important:** Version v1.1.9 and introduces new fields to the database table. If you are upgrading from a previous version, you **must** run the migrations after updating the package to ensure the system functions correctly:
 ```bash
 php artisan migrate
 ```
@@ -244,125 +252,6 @@ All events are located in the `daacreators\CreatorsTicketing\Events` namespace:
 > **Note:** Properties marked with `?` are nullable and may be `null` in certain contexts.
 
 
-### Listening to Events
-
-Create a listener in your application to respond to these events:
-
-**Step 1:** Create a listener class
-```bash
-php artisan make:listener SendTicketCreatedEmail
-```
-
-**Step 2:** Implement the listener
-```php
-<?php
-
-namespace App\Listeners;
-
-use Illuminate\Support\Facades\Mail;
-use daacreators\CreatorsTicketing\Events\TicketCreated;
-use Illuminate\Contracts\Queue\ShouldQueue;
-
-class SendTicketCreatedEmail implements ShouldQueue
-{
-    public function handle(TicketCreated $event): void
-    {
-        $ticket = $event->ticket;
-        $user = $event->user;
-        
-        Mail::to($ticket->requester->email)->send(
-            new \App\Mail\TicketCreatedMail($ticket)
-        );
-        
-        if ($ticket->assignee) {
-            Mail::to($ticket->assignee->email)->send(
-                new \App\Mail\NewTicketAssignedMail($ticket)
-            );
-        }
-    }
-}
-```
-
-**Step 3:** Register the listener in `EventServiceProvider`
-```php
-<?php
-
-namespace App\Providers;
-
-use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
-use daacreators\CreatorsTicketing\Events\TicketCreated;
-use daacreators\CreatorsTicketing\Events\TicketAssigned;
-use daacreators\CreatorsTicketing\Events\TicketStatusChanged;
-use App\Listeners\SendTicketCreatedEmail;
-use App\Listeners\NotifyAssigneeListener;
-use App\Listeners\SendStatusChangeNotification;
-
-class EventServiceProvider extends ServiceProvider
-{
-    protected $listen = [
-        TicketCreated::class => [
-            SendTicketCreatedEmail::class,
-        ],
-        TicketAssigned::class => [
-            NotifyAssigneeListener::class,
-        ],
-        TicketStatusChanged::class => [
-            SendStatusChangeNotification::class,
-        ],
-    ];
-}
-```
-
-### Example Use Cases
-
-**1. Send Email When Ticket is Assigned**
-```php
-use daacreators\CreatorsTicketing\Events\TicketAssigned;
-use Illuminate\Support\Facades\Mail;
-
-class NotifyAssigneeListener
-{
-    public function handle(TicketAssigned $event): void
-    {
-        if ($event->newAssigneeId) {
-            $assignee = \App\Models\User::find($event->newAssigneeId);
-            
-            Mail::to($assignee->email)->send(
-                new \App\Mail\TicketAssignedToYouMail($event->ticket, $assignee)
-            );
-        }
-    }
-}
-```
-
-**2. Send Slack Notification for High Priority Tickets**
-```php
-use daacreators\CreatorsTicketing\Events\TicketPriorityChanged;
-use daacreators\CreatorsTicketing\Enums\TicketPriority;
-use Illuminate\Support\Facades\Http;
-
-class SlackHighPriorityAlert
-{
-    public function handle(TicketPriorityChanged $event): void
-    {
-        if ($event->newPriority === TicketPriority::HIGH) {
-            Http::post(config('services.slack.webhook_url'), [
-                'text' => "High Priority Ticket: #{$event->ticket->ticket_uid}",
-                'blocks' => [
-                    [
-                        'type' => 'section',
-                        'text' => [
-                            'type' => 'mrkdwn',
-                            'text' => "*Ticket:* {$event->ticket->title}\n*Department:* {$event->ticket->department->name}"
-                        ]
-                    ]
-                ]
-            ]);
-        }
-    }
-}
-```
-
 ## Automation Rules
 
 Automation rules allow you to automate actions on tickets based on specific events and conditions.  
@@ -397,6 +286,42 @@ Automation rules allow you to automate actions on tickets based on specific even
 - Add internal note
 - Add public reply
 
+## Managing Spam Filters
+
+1. Navigate to **Spam Filters** in the admin panel
+2. Click **Create** to add a new filter
+3. Select the filter type and action (block/allow)
+4. Add values (keywords, emails, IPs, or patterns)
+5. Set priority (higher numbers execute first)
+6. Optionally add a reason for internal reference
+
+in `config/creators-ticketing.php`:
+```php
+    'spam_protection' => [
+        'enabled' => env('TICKETING_SPAM_PROTECTION', true),
+        'rate_limiting' => [
+            'enabled' => true,
+            'max_tickets_per_hour' => 5,
+            'max_tickets_per_day' => 20,
+        ],
+        'content_filtering' => [
+            'enabled' => true,
+            'check_links' => true,
+            'max_links_allowed' => 3,
+        ],
+    ],
+```
+### Viewing Spam Logs
+
+All blocked submissions are logged with complete details:
+- Date and time of attempt
+- User information
+- Email and IP address
+- Filter type that triggered
+- Matched value
+- Complete ticket data that was submitted
+
+Access spam logs through **Spam Logs** in the admin panel.
 
 ## Security
 

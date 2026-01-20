@@ -49,6 +49,8 @@ class Department extends Model
             'can_view_internal_notes',
             'can_manage_automations',
             'can_view_automation_logs',
+            'can_manage_spam_filters',
+            'can_view_spam_logs',
         ]);
     }
 

@@ -87,6 +87,29 @@ return [
     */
     'ticket_limit_message' => env('TICKET_LIMIT_MESSAGE', 'You have reached the maximum number of open tickets. Please wait for an existing ticket to be resolved before creating a new one.'),
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | Ticket Spam filters
+    |--------------------------------------------------------------------------
+    |
+    | This is for spam filter to protect against spam tickets
+    |
+    */
+    'spam_protection' => [
+        'enabled' => env('TICKETING_SPAM_PROTECTION', true),
+        'rate_limiting' => [
+            'enabled' => true,
+            'max_tickets_per_hour' => 5,
+            'max_tickets_per_day' => 20,
+        ],
+        'content_filtering' => [
+            'enabled' => true,
+            'check_links' => true,
+            'max_links_allowed' => 3,
+        ],
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Ticket Prefix
