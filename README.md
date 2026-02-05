@@ -201,7 +201,7 @@ Tickets can be managed through the Filament admin panel. You can:
 
 To add the tickets and ticket submission form to your frontend:
 ```blade
-@livewire('creators-ticketing::ticket-submit-form')
+@livewire('creators-ticketing.ticket-submit-form')
 ```
 
 ## Dashboard Widget
