@@ -15,10 +15,27 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Requester Model
+    |--------------------------------------------------------------------------
+    | This is the model that represents the requester of a ticket.
+    | It should be a model that exists in your application, typically the User model.
+    */
+    'requester_model' => env('TICKETING_REQUESTER_MODEL', \App\Models\User::class),
+
+    /*
+    |--------------------------------------------------------------------------
     | User Model
     |--------------------------------------------------------------------------
     */
     'user_model' => env('USER_MODEL', \App\Models\User::class),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Requester Name from User Model
+    | Default to 'name'
+    |--------------------------------------------------------------------------
+    */
+    'requester_name_column' => env('REQUESTER_NAME_COLUMN', 'name'),
 
     /*
     |--------------------------------------------------------------------------

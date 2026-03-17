@@ -26,15 +26,14 @@ class TicketReply extends Model
         return $this->belongsTo(Ticket::class);
     }
 
-    public function user(): BelongsTo
+    public function author() 
     {
-        $userModel = config('creators-ticketing.user_model', \App\Models\User::class);
-        return $this->belongsTo($userModel, 'user_id');
+        return $this->morphTo();
     }
 
-    public function markSeenBy($userId): void
+    public function markSeenBy($user): void
     {
-        if ($userId == $this->user_id) {
+        if ($user->id == $this->author_id) {
             return;
         }
 
@@ -43,7 +42,8 @@ class TicketReply extends Model
         }
 
         $this->is_seen = true;
-        $this->seen_by = $userId;
+        $this->seen_by_id = $user->id;
+        $this->seen_by_type = get_class($user);
         $this->seen_at = now();
         $this->saveQuietly();
     }
