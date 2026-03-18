@@ -45,7 +45,7 @@ class Ticket extends Model
     public function requester(): BelongsTo
     {
         $userModel = config('creators-ticketing.user_model', \App\Models\User::class);
-        return $this->belongsTo($userModel, 'user_id');
+        return $this->belongsTo($userModel, 'requester_id');
     }
 
     public function assignee(): BelongsTo
@@ -81,7 +81,7 @@ class Ticket extends Model
 
     public function markSeenBy($userId): void
     {
-        if ($userId == $this->user_id) {
+        if ($userId == $this->requester_id) {
             return;
         }
 
@@ -137,7 +137,7 @@ class Ticket extends Model
         }
 
         return $query->where(function ($q) use ($userId) {
-            $q->where('user_id', $userId)
+            $q->where('requester_id', $userId)
               ->orWhere('assignee_id', $userId);
         });
     }

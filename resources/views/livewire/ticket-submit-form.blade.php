@@ -260,7 +260,7 @@
                                                             <div class="flex items-center justify-between mb-2">
                                                                 <div class="flex items-center gap-3 min-w-0">
                                                                     <p class="text-sm font-bold text-gray-900 group-hover:text-blue-600 truncate transition-colors">{{ $ticket->title }}</p>
-                                                                    @if($ticket->publicReplies->where('is_seen', false)->where('user_id', '!=', auth()->id())->count() > 0)
+                                                                    @if($ticket->publicReplies->where('is_seen', false)->where('author_id', '!=', auth()->id())->count() > 0)
                                                                         <span class="flex-shrink-0 inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-red-100 text-red-800 animate-pulse">
                                                                             {{ __('creators-ticketing::resources.frontend.new_reply') }}
                                                                         </span>

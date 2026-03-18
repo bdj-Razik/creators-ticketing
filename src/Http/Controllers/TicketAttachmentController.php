@@ -46,7 +46,7 @@ class TicketAttachmentController extends Controller
 
     private function userHasAccessToTicket($user, $ticket)
     {
-        if ($user->getKey() == $ticket->user_id || $user->getKey() == $ticket->assignee_id) {
+        if ($user->getKey() == $ticket->requester_id || $user->getKey() == $ticket->assignee_id) {
             return true;
         }
 

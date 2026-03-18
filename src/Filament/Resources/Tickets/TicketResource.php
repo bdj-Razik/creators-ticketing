@@ -104,7 +104,7 @@ class TicketResource extends Resource
             return false;
         }
 
-        if ($record->user_id === $user->getKey()) {
+        if ($record->requester_id === $user->getKey()) {
             return true;
         }
 
@@ -149,7 +149,7 @@ class TicketResource extends Resource
             Group::make()->schema([
                 Section::make(__('creators-ticketing::resources.ticket.properties'))
                     ->schema([
-                        Select::make('user_id')
+                        Select::make('requester_id')
                             ->label(__('creators-ticketing::resources.ticket.requester'))
                             ->searchable()
                             ->required()
@@ -339,7 +339,7 @@ class TicketResource extends Resource
                 }
 
                 $query->where(function (Builder $q) use ($user) {
-                    $q->where('user_id', $user->getKey())
+                    $q->where('requester_id', $user->getKey())
                       ->orWhere('assignee_id', $user->getKey());
                 });
             })

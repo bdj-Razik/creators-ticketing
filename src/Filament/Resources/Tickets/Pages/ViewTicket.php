@@ -132,7 +132,7 @@ class ViewTicket extends ViewRecord
         $user = Filament::auth()->user();
 
         $canReplyToTickets = $permissions['is_admin'] || 
-                            ($this->record->user_id === $user->getKey() && config('creators-ticketing.allow_requester_to_reply', true)) ||
+                            ($this->record->requester_id === $user->getKey() && config('creators-ticketing.allow_requester_to_reply', true)) ||
                             collect($permissions['permissions'])->contains(fn($p) => $p['can_reply_to_tickets'] ?? false);
         
         $canAddInternalNotes = $permissions['is_admin'] || 
@@ -163,7 +163,8 @@ class ViewTicket extends ViewRecord
 
         $reply = $this->record->replies()->create([
             'content' => str($htmlContent)->sanitizeHtml(),
-            'user_id' => Filament::auth()->user()?->getKey(),
+            'author_id' => Filament::auth()->user()?->getKey(),
+            'author_type' => Filament::auth()->user() ? get_class(Filament::auth()->user()) : null,
             'is_internal_note' => $data['is_internal_note'] ?? false,
         ]);
 
@@ -438,7 +439,7 @@ class ViewTicket extends ViewRecord
         $user = Filament::auth()->user();
 
         $canReplyToTickets = $permissions['is_admin'] || 
-                             ($this->record->user_id === $user->getKey() && config('creators-ticketing.allow_requester_to_reply', true)) ||
+                             ($this->record->requester_id === $user->getKey() && config('creators-ticketing.allow_requester_to_reply', true)) ||
                              collect($permissions['permissions'])->contains(fn($p) => $p['can_reply_to_tickets'] ?? false);
         
         $canAddInternalNotes = $permissions['is_admin'] || 
