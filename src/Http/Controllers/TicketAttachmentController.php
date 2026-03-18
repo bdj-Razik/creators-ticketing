@@ -55,7 +55,7 @@ class TicketAttachmentController extends Controller
             return true;
         }
 
-        return $this->userIsDepartmentAgent($user, $ticket->department_id);
+        return $this->userIsAgent($user);
     }
 
     private function userIsSuperAdmin($user)
@@ -66,11 +66,10 @@ class TicketAttachmentController extends Controller
         return in_array($user->{$field} ?? null, $allowed, true);
     }
 
-    private function userIsDepartmentAgent($user, $departmentId)
+    private function userIsAgent($user)
     {
         return DB::table(config('creators-ticketing.table_prefix') . 'department_users')
             ->where('user_id', $user->getKey())
-            ->where('department_id', $departmentId)
             ->exists();
     }
 

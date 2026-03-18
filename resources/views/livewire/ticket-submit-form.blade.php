@@ -55,10 +55,6 @@
                         </h4>
                         <dl class="space-y-4 text-sm">
                             <div class="flex justify-between items-center">
-                                <dt class="text-gray-500">{{ __('creators-ticketing::resources.frontend.department_label') }}</dt>
-                                <dd class="font-medium text-gray-900 truncate pl-4">{{ $selectedTicket->department->name }}</dd>
-                            </div>
-                            <div class="flex justify-between items-center">
                                 <dt class="text-gray-500">{{ __('creators-ticketing::resources.frontend.created_at_label') }}</dt>
                                 <dd class="font-medium text-gray-900">{{ $selectedTicket->created_at->format('M d, Y') }}</dd>
                             </div>
@@ -188,277 +184,67 @@
                                     </div>
 
                                     <form wire:submit.prevent="submit" class="max-w-4xl mx-auto">
-                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div class="grid grid-cols-1 gap-6">
                                             
-                                            {{-- Department & Category --}}
-                                            <div class="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-gray-50 rounded-xl border border-gray-200">
-                                                <div class="{{ count($available_forms) > 1 ? 'col-span-1' : 'col-span-1 md:col-span-2 max-w-md mx-auto w-full' }}">
-                                                    <label class="block text-sm font-semibold text-gray-900 mb-2">
-                                                        {{ __('creators-ticketing::resources.frontend.select_department') }} <span class="text-red-500">*</span>
-                                                    </label>
-                                                    <div class="relative">
-                                                        <select wire:model.live="department_id" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2.5 pl-3 pr-10 transition-shadow appearance-none bg-white">
-                                                            <option value="">{{ __('creators-ticketing::resources.frontend.choose_department') }}</option>
-                                                            @foreach($departments as $dept)
-                                                                <option value="{{ $dept->id }}">{{ $dept->name }}</option>
-                                                            @endforeach
-                                                        </select>
-                                                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
-                                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                                                        </div>
-                                                    </div>
-                                                    @error('department_id') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-                                                </div>
-
-                                                @if(count($available_forms) > 1)
-                                                    <div class="col-span-1 animate-in fade-in slide-in-from-left-2">
-                                                        <label class="block text-sm font-semibold text-gray-900 mb-2">
-                                                            {{ __('creators-ticketing::resources.frontend.category_label') }} <span class="text-red-500">*</span>
-                                                        </label>
-                                                        <div class="relative">
-                                                            <select wire:model.live="form_id" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2.5 pl-3 pr-10 transition-shadow appearance-none bg-white">
-                                                                <option value="">{{ __('creators-ticketing::resources.frontend.select_option') }}</option>
-                                                                @foreach($available_forms as $form)
-                                                                    <option value="{{ $form->id }}">{{ $form->name }}</option>
-                                                                @endforeach
-                                                            </select>
-                                                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
-                                                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                                                            </div>
-                                                        </div>
-                                                        @error('form_id') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-                                                    </div>
-                                                @endif
+                                            {{-- Subject --}}
+                                            <div>
+                                                <label class="block text-sm font-semibold text-gray-900 mb-2">
+                                                    {{ __('creators-ticketing::resources.frontend.subject_label') }} <span class="text-red-500">*</span>
+                                                </label>
+                                                <input 
+                                                    type="text" 
+                                                    wire:model="subject" 
+                                                    class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2.5 transition-shadow"
+                                                    placeholder="{{ __('creators-ticketing::resources.frontend.subject_placeholder') }}"
+                                                >
+                                                @error('subject') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                             </div>
 
-                                            <div wire:loading wire:target="department_id, form_id" class="col-span-1 md:col-span-2 py-8 text-center">
-                                                <div class="inline-flex items-center gap-2 text-gray-500 bg-white px-4 py-2 rounded-full shadow-sm border">
-                                                    <svg class="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                                                    <span class="text-sm font-medium">{{ __('creators-ticketing::resources.frontend.loading_fields') }}</span>
-                                                </div>
+                                            {{-- Description --}}
+                                            <div>
+                                                <label class="block text-sm font-semibold text-gray-900 mb-2">
+                                                    {{ __('creators-ticketing::resources.frontend.description_label') }} <span class="text-red-500">*</span>
+                                                </label>
+                                                <textarea 
+                                                    wire:model="description" 
+                                                    rows="6" 
+                                                    class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-3 resize-y transition-shadow"
+                                                    placeholder="{{ __('creators-ticketing::resources.frontend.description_placeholder') }}"
+                                                ></textarea>
+                                                @error('description') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                             </div>
 
-                                            {{-- Dynamic Fields --}}
-                                            @if(!empty($form_fields))
-                                                <div class="col-span-1 md:col-span-2">
-                                                    <div class="h-px w-full bg-gray-100 my-2"></div>
-                                                </div>
+                                            {{-- Submit Button --}}
+                                            <div class="pt-4">
+                                                <button type="submit"
+                                                    wire:loading.attr="disabled"
+                                                    wire:target="submit"
+                                                    class="w-full flex justify-center items-center py-3.5 px-6 border border-transparent rounded-xl shadow-md text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform active:scale-[0.99]">
 
-                                                @foreach($form_fields as $field)
-                                                    <div wire:key="field-wrapper-{{ $field['name'] }}" 
-                                                        class="{{ in_array($field['type'], ['textarea', 'rich_editor', 'file', 'file_multiple']) ? 'col-span-1 md:col-span-2' : 'col-span-1' }}">
-                                                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                                                            {{ $field['label'] }} 
-                                                            @if($field['is_required']) <span class="text-red-500">*</span> @endif
-                                                        </label>
+                                                    <span class="block w-full text-center"
+                                                        wire:loading.remove
+                                                        wire:target="submit">
+                                                        {{ __('creators-ticketing::resources.frontend.submit_btn') }}
+                                                    </span>
 
-                                                        @switch($field['type'])
-                                                            @case('textarea')
-                                                                <textarea 
-                                                                    wire:model="custom_fields.{{ $field['name'] }}" 
-                                                                    rows="5" 
-                                                                    class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-3 resize-y transition-shadow"
-                                                                ></textarea>
-                                                                @break
+                                                    <span class="block w-full text-center"
+                                                        wire:loading
+                                                        wire:target="submit">
+                                                        <div class="flex items-center justify-center gap-2 w-full">
+                                                            <svg class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                                                                <circle class="opacity-25" cx="12" cy="12" r="10"
+                                                                        stroke="currentColor" stroke-width="4"></circle>
+                                                                <path class="opacity-75" fill="currentColor"
+                                                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 
+                                                                    5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 
+                                                                    3 7.938l3-2.647z"></path>
+                                                            </svg>
+                                                            {{ __('creators-ticketing::resources.frontend.submitting_btn') }}
+                                                        </div>
+                                                    </span>
 
-                                                            @case('select')
-                                                                <div class="relative">
-                                                                    <select wire:model="custom_fields.{{ $field['name'] }}" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2.5 pl-3 pr-10 transition-shadow appearance-none bg-white">
-                                                                        <option value="">{{ __('creators-ticketing::resources.frontend.select_option') }}</option>
-                                                                        @foreach($field['options'] ?? [] as $k => $v) <option value="{{ $k }}">{{ $v }}</option> @endforeach
-                                                                    </select>
-                                                                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
-                                                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                                                                    </div>
-                                                                </div>
-                                                                @break
-
-                                                            @case('radio')
-                                                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1">
-                                                                    @foreach($field['options'] ?? [] as $k => $v)
-                                                                        <label class="relative flex items-start px-4 py-3 rounded-lg border border-gray-200 cursor-pointer hover:bg-blue-50 hover:border-blue-200 transition-all duration-200 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2">
-                                                                            <input type="radio" wire:model="custom_fields.{{ $field['name'] }}" value="{{ $k }}" class="mt-0.5 h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500 flex-shrink-0">
-                                                                            <span class="ml-3 block text-sm font-medium text-gray-700 leading-snug">
-                                                                                {{ $v }}
-                                                                            </span>
-                                                                        </label>
-                                                                    @endforeach
-                                                                </div>
-                                                                @break
-
-                                                            @case('file')
-                                                            @case('file_multiple')
-                                                                    <div class="w-full" x-data="{ isUploading: false }">
-                                                                        @php
-                                                                            $isMultiple = $field['type'] === 'file_multiple';
-                                                                            $rulesString = $field['validation_rules'] ?? '';
-                                                                            
-                                                                            preg_match('/mimes:([^|]+)/', $rulesString, $mimes);
-                                                                            preg_match('/max:(\d+)/', $rulesString, $maxSize);
-                                                                            preg_match('/max_files:(\d+)/', $rulesString, $maxFiles);
-                                                                            
-                                                                            $maxFilesCount = $maxFiles[1] ?? null;
-
-                                                                            $accept = '';
-                                                                            if (!empty($mimes[1])) {
-                                                                                $extensions = explode(',', $mimes[1]);
-                                                                                $accept = implode(',', array_map(fn($ext) => '.' . trim($ext), $extensions));
-                                                                            }
-                                                                        @endphp
-
-                                                                        <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-xl cursor-pointer bg-gray-50 hover:bg-blue-50 hover:border-blue-400 transition-all duration-200 group relative overflow-hidden">
-                                                                            <div class="flex flex-col items-center justify-center pt-5 pb-6">
-                                                                                <div class="p-2 bg-white rounded-full shadow-sm mb-2 group-hover:scale-110 transition-transform">
-                                                                                    <svg class="w-6 h-6 text-gray-400 group-hover:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
-                                                                                </div>
-                                                                                <p class="text-sm text-gray-600 group-hover:text-gray-800">
-                                                                                    {{ $isMultiple ? __('creators-ticketing::resources.frontend.upload_click') : 'Click to upload a file' }}
-                                                                                </p>
-                                                                                
-                                                                                @if(!empty($field['help_text']))
-                                                                                    <p class="text-xs text-gray-500 mt-1">{{ $field['help_text'] }}</p>
-                                                                                @endif
-                                                                                
-                                                                                <p class="text-xs text-gray-400 mt-2">
-                                                                                    @if(!empty($mimes[1]))
-                                                                                        <span class="uppercase">{{ str_replace(',', ', ', $mimes[1]) }}</span>
-                                                                                    @endif
-                                                                                    
-                                                                                    @if($isMultiple && $maxFilesCount)
-                                                                                        <span class="ml-2 font-semibold">MAX FILES: {{ $maxFilesCount }}</span>
-                                                                                    @endif
-
-                                                                                    @if(!empty($maxSize[1]))
-                                                                                        <span class="ml-2">MAX SIZE: {{ round($maxSize[1] / 1024, 1) }}MB</span>
-                                                                                    @endif
-                                                                                </p>
-                                                                            </div>
-                                                                            
-                                                                            <input 
-                                                                                type="file" 
-                                                                                class="hidden" 
-                                                                                accept="{{ $accept }}"
-                                                                                @if($isMultiple) multiple @endif
-                                                                                @change="
-                                                                                    const maxFiles = {{ $maxFilesCount ?? 'null' }};
-                                                                                    const files = $el.files;
-
-                                                                                    if (maxFiles && files.length > maxFiles) {
-                                                                                        alert('{{ __('creators-ticketing::resources.frontend.max_files_error', ['count' => $maxFilesCount ?? 0]) }}');
-                                                                                        $el.value = '';
-                                                                                        return;
-                                                                                    }
-
-                                                                                    isUploading = true;
-
-                                                                                    @if($isMultiple)
-                                                                                        $wire.uploadMultiple('custom_fields.{{ $field['name'] }}', files, 
-                                                                                            () => { isUploading = false; }, 
-                                                                                            () => { isUploading = false; $el.value = '' }, 
-                                                                                            (event) => {} 
-                                                                                        );
-                                                                                    @else
-                                                                                        $wire.upload('custom_fields.{{ $field['name'] }}', files[0], 
-                                                                                            () => { isUploading = false; }, 
-                                                                                            () => { isUploading = false; $el.value = '' },
-                                                                                            (event) => {}
-                                                                                        );
-                                                                                    @endif
-                                                                                "
-                                                                            >
-                                                                        </label>
-                                                                        
-                                                                        @if(isset($custom_fields[$field['name']]))
-                                                                            <ul class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                                                                @php
-                                                                                    $files = is_array($custom_fields[$field['name']]) 
-                                                                                        ? $custom_fields[$field['name']] 
-                                                                                        : [$custom_fields[$field['name']]];
-                                                                                @endphp
-                                                                                @foreach($files as $index => $file)
-                                                                                    @if($file)
-                                                                                    <li class="flex items-center justify-between p-2 bg-white border border-gray-200 rounded-lg shadow-sm">
-                                                                                        <div class="flex items-center gap-2 overflow-hidden">
-                                                                                            @if(method_exists($file, 'temporaryUrl') && in_array(strtolower($file->extension() ?? ''), ['jpg','jpeg','png','gif','webp']))
-                                                                                                <img src="{{ $file->temporaryUrl() }}" class="w-8 h-8 rounded object-cover border border-gray-100">
-                                                                                            @else
-                                                                                                <div class="w-8 h-8 rounded bg-gray-100 flex items-center justify-center text-gray-400">
-                                                                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                                                                                </div>
-                                                                                            @endif
-                                                                                            <div class="flex-1 min-w-0">
-                                                                                                <span class="text-xs text-gray-600 truncate block">{{ $file->getClientOriginalName() }}</span>
-                                                                                                <span class="text-xs text-gray-400">{{ number_format($file->getSize() / 1024, 1) }} KB</span>
-                                                                                            </div>
-                                                                                        </div>
-                                                                                        <button type="button" wire:click="removeFile('{{ $field['name'] }}', {{ $isMultiple ? $index : 'null' }})" class="p-1 text-gray-400 hover:text-red-500 rounded-full hover:bg-red-50 transition-colors">
-                                                                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                                                                                        </button>
-                                                                                    </li>
-                                                                                    @endif
-                                                                                @endforeach
-                                                                            </ul>
-                                                                        @endif
-
-                                                                       <div x-show="isUploading" style="display: none;" class="w-full mt-2">
-                                                                            <div class="flex items-center gap-2 text-sm text-blue-600 bg-blue-50 py-1 px-3 rounded-md">
-                                                                                <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                                                                                <span class="font-medium">{{ __('creators-ticketing::resources.frontend.uploading') }}</span>
-                                                                            </div>
-                                                                        </div>
-
-                                                                    </div>
-                                                                @break
-
-                                                            @default
-                                                                <input 
-                                                                    type="{{ $field['type'] }}" 
-                                                                    wire:model="custom_fields.{{ $field['name'] }}" 
-                                                                    class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2.5 transition-shadow"
-                                                                >
-                                                        @endswitch
-                                                        @error("custom_fields.{$field['name']}") <p class="mt-1 text-sm text-red-600 animate-pulse">{{ $message }}</p> @enderror
-                                                        @error("custom_fields.{$field['name']}.*") <p class="mt-1 text-sm text-red-600 animate-pulse">{{ $message }}</p> @enderror
-                                                    </div>
-                                                @endforeach
-
-                                                <div class="col-span-1 md:col-span-2 pt-6">
-                                                    <button type="submit"
-                                                        wire:loading.attr="disabled"
-                                                        wire:target="submit"
-                                                        class="w-full flex justify-center items-center py-3.5 px-6 border border-transparent rounded-xl shadow-md text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform active:scale-[0.99]">
-
-                                                        <span class="block w-full text-center"
-                                                            wire:loading.remove
-                                                            wire:target="submit">
-                                                            {{ __('creators-ticketing::resources.frontend.submit_btn') }}
-                                                        </span>
-
-                                                        <span class="block w-full text-center"
-                                                            wire:loading
-                                                            wire:target="submit">
-                                                            <div class="flex items-center justify-center gap-2 w-full">
-                                                                <svg class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                                                                    <circle class="opacity-25" cx="12" cy="12" r="10"
-                                                                            stroke="currentColor" stroke-width="4"></circle>
-                                                                    <path class="opacity-75" fill="currentColor"
-                                                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 
-                                                                        5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 
-                                                                        3 7.938l3-2.647z"></path>
-                                                                </svg>
-                                                                {{ __('creators-ticketing::resources.frontend.submitting_btn') }}
-                                                            </div>
-                                                        </span>
-
-                                                    </button>
-                                                </div>
-                                            @elseif($department_id && ($form_id || count($available_forms) <= 1))
-                                                <div class="col-span-1 md:col-span-2 text-center py-16 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
-                                                    <svg class="mx-auto h-12 w-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                                    <h3 class="mt-2 text-sm font-medium text-gray-900">{{ __('creators-ticketing::resources.frontend.no_form_title') }}</h3>
-                                                    <p class="mt-1 text-sm text-gray-500">{{ __('creators-ticketing::resources.frontend.no_form_desc') }}</p>
-                                                </div>
-                                            @endif
+                                                </button>
+                                            </div>
                                         </div>
                                     </form>
                                 </div>
@@ -489,8 +275,6 @@
                                                             <div class="flex items-center justify-between text-xs text-gray-500">
                                                                 <div class="flex items-center gap-2">
                                                                     <span class="font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-600">#{{ $ticket->ticket_uid }}</span>
-                                                                    <span>&bull;</span>
-                                                                    <span class="font-medium text-gray-600">{{ $ticket->department->name }}</span>
                                                                 </div>
                                                                 <div class="flex items-center gap-1">
                                                                     <svg class="h-3.5 w-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
