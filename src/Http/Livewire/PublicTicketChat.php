@@ -27,7 +27,7 @@ class PublicTicketChat extends Component
         $this->ticketId = $ticketId;
         $this->ticket = Ticket::with(['status'])
             ->where('id', $ticketId)
-            ->where('user_id', auth()->id())
+            ->where('requester_id', auth()->id())
             ->firstOrFail();
             
         $this->ticket->markSeenBy(auth()->id());
@@ -38,7 +38,7 @@ class PublicTicketChat extends Component
     public function loadReplies()
     {
         $this->replies = $this->ticket->publicReplies()
-            ->with('user')
+            ->with('author')
             ->orderBy('created_at', 'asc')
             ->get();
 
@@ -78,7 +78,8 @@ class PublicTicketChat extends Component
 
         $reply = TicketReply::create([
             'ticket_id' => $this->ticket->id,
-            'user_id' => auth()->id(),
+            'author_id' => auth()->id(),
+            'author_type' => get_class(auth()->user()),
             'content' => $this->message,
             'is_internal_note' => false,
         ]);

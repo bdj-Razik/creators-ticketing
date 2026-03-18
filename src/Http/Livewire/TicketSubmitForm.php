@@ -43,7 +43,7 @@ class TicketSubmitForm extends Component
     protected function loadUserTickets()
     {
         if (auth()->check()) {
-            $this->userTickets = Ticket::where('user_id', auth()->id())
+            $this->userTickets = Ticket::where('requester_id', auth()->id())
                 ->with(['status', 'publicReplies'])
                 ->orderBy('last_activity_at', 'desc')
                 ->get();
@@ -68,9 +68,9 @@ class TicketSubmitForm extends Component
 
      public function viewTicket($ticketId)
     {
-        $this->selectedTicket = Ticket::with(['status', 'publicReplies.user'])
+        $this->selectedTicket = Ticket::with(['status', 'publicReplies.author'])
             ->where('id', $ticketId)
-            ->where('user_id', auth()->id())
+            ->where('requester_id', auth()->id())
             ->first();
 
         if ($this->selectedTicket) {
@@ -114,7 +114,7 @@ class TicketSubmitForm extends Component
         $maxTickets = config('creators-ticketing.max_open_tickets_per_user');
             
         if ($maxTickets && $maxTickets > 0) {
-            $openTicketsCount = Ticket::where('user_id', auth()->id())
+            $openTicketsCount = Ticket::where('requester_id', auth()->id())
                 ->whereHas('status', fn($q) => $q->where('is_closing_status', false))
                 ->count();
             
@@ -133,7 +133,7 @@ class TicketSubmitForm extends Component
                 'subject' => $this->subject,
                 'description' => $this->description,
             ],
-            'user_id' => auth()->id(),
+            'requester_id' => auth()->id(),
             'ticket_status_id' => $defaultStatus?->id,
             'last_activity_at' => now(),
         ]);

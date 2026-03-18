@@ -53,7 +53,7 @@
         <div style="display:flex;flex-direction:column-reverse;gap:1rem;">
             @foreach($replies->reverse() as $reply)
                 @php
-                    $isRequester = $reply->user_id === $reply->ticket->user_id;
+                    $isRequester = $reply->author_id === $reply->ticket->requester_id;
                     
                     preg_match_all('/<img[^>]+src="([^"]+)"[^>]*>/', $reply->content, $imageMatches);
                     $allImages = $imageMatches[1] ?? [];

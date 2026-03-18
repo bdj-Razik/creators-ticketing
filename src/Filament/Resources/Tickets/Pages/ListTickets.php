@@ -83,9 +83,9 @@ class ListTickets extends ListRecords
 
             'my_tickets' => Tab::make(__('creators-ticketing::resources.ticket.tabs.my_tickets'))
                 ->modifyQueryUsing(fn (Builder $query) => 
-                    $query->where('user_id', $user->getKey())
+                    $query->where('requester_id', $user->getKey())
                 )
-                ->badge(Ticket::where('user_id', $user->getKey())
+                ->badge(Ticket::where('requester_id', $user->getKey())
                     ->count())
                 ->icon('heroicon-o-user'),
 
@@ -120,28 +120,28 @@ class ListTickets extends ListRecords
         return [
             'my_tickets' => Tab::make(__('creators-ticketing::resources.ticket.tabs.my_tickets'))
                 ->modifyQueryUsing(fn (Builder $query) => 
-                    $query->where('user_id', $user->getKey())
+                    $query->where('requester_id', $user->getKey())
                 )
-                ->badge(Ticket::where('user_id', $user->getKey())
+                ->badge(Ticket::where('requester_id', $user->getKey())
                     ->count())
                 ->icon('heroicon-o-user'),
 
             'open' => Tab::make(__('creators-ticketing::resources.ticket.tabs.open'))
                 ->modifyQueryUsing(fn (Builder $query) =>
-                    $query->where('user_id', $user->getKey())
+                    $query->where('requester_id', $user->getKey())
                         ->whereHas('status', fn (Builder $q) => $q->where('is_closing_status', false))
                 )
-                ->badge(Ticket::where('user_id', $user->getKey())
+                ->badge(Ticket::where('requester_id', $user->getKey())
                     ->whereHas('status', fn ($q) => $q->where('is_closing_status', false))
                     ->count())
                 ->icon('heroicon-o-clock'),
 
             'closed' => Tab::make(__('creators-ticketing::resources.ticket.tabs.closed'))
                 ->modifyQueryUsing(fn (Builder $query) =>
-                    $query->where('user_id', $user->getKey())
+                    $query->where('requester_id', $user->getKey())
                         ->whereHas('status', fn (Builder $q) => $q->where('is_closing_status', true))
                 )
-                ->badge(Ticket::where('user_id', $user->getKey())
+                ->badge(Ticket::where('requester_id', $user->getKey())
                     ->whereHas('status', fn ($q) => $q->where('is_closing_status', true))
                     ->count())
                 ->icon('heroicon-o-check-circle'),
@@ -175,9 +175,9 @@ class ListTickets extends ListRecords
 
         $tabs['my_tickets'] = Tab::make(__('creators-ticketing::resources.ticket.tabs.my_tickets'))
             ->modifyQueryUsing(fn (Builder $query) => 
-                $query->where('user_id', $user->getKey())
+                $query->where('requester_id', $user->getKey())
             )
-            ->badge(Ticket::where('user_id', $user->getKey())
+            ->badge(Ticket::where('requester_id', $user->getKey())
                 ->count())
             ->icon('heroicon-o-user');
 
@@ -200,7 +200,7 @@ class ListTickets extends ListRecords
                 }
                 return $query->where(function ($q) use ($user) {
                     $q->where('assignee_id', $user->getKey())
-                    ->orWhere('user_id', $user->getKey());
+                    ->orWhere('requester_id', $user->getKey());
                 })->whereHas('status', fn (Builder $q) => $q->where('is_closing_status', false));
             })
             ->badge(function () use ($user, $canViewAll) {
@@ -210,7 +210,7 @@ class ListTickets extends ListRecords
                 }
                 return Ticket::where(function ($q) use ($user) {
                     $q->where('assignee_id', $user->getKey())
-                    ->orWhere('user_id', $user->getKey());
+                    ->orWhere('requester_id', $user->getKey());
                 })->whereHas('status', fn ($q) => $q->where('is_closing_status', false))->count();
             })
             ->icon('heroicon-o-clock');
@@ -222,7 +222,7 @@ class ListTickets extends ListRecords
                 }
                 return $query->where(function ($q) use ($user) {
                     $q->where('assignee_id', $user->getKey())
-                    ->orWhere('user_id', $user->getKey());
+                    ->orWhere('requester_id', $user->getKey());
                 })->whereHas('status', fn (Builder $q) => $q->where('is_closing_status', true));
             })
             ->badge(function () use ($user, $canViewAll) {
@@ -232,7 +232,7 @@ class ListTickets extends ListRecords
                 }
                 return Ticket::where(function ($q) use ($user) {
                     $q->where('assignee_id', $user->getKey())
-                    ->orWhere('user_id', $user->getKey());
+                    ->orWhere('requester_id', $user->getKey());
                 })->whereHas('status', fn ($q) => $q->where('is_closing_status', true))->count();
             })
             ->icon('heroicon-o-check-circle');
