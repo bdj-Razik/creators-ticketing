@@ -5,7 +5,6 @@ namespace daacreators\CreatorsTicketing\Filament\Resources\Tickets\Pages;
 use daacreators\CreatorsTicketing\Filament\Resources\Tickets\TicketResource;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Facades\Storage;
-use daacreators\CreatorsTicketing\Models\Form;
 
 class CreateTicket extends CreateRecord
 {
@@ -14,33 +13,17 @@ class CreateTicket extends CreateRecord
     protected function afterCreate(): void
     {
         $record = $this->getRecord();
-        
-        $formId = $record->form_id;
-        if (!$formId && $record->department) {
-            $formId = $record->department->forms()->where('is_active', true)->first()?->id;
-        }
-
-        if (!$formId) return;
-
-        $form = Form::with('fields')->find($formId);
         $customFields = $record->custom_fields ?? [];
         $hasChanges = false;
         $disk = Storage::disk('private');
 
-        foreach ($form->fields as $field) {
-            if (in_array($field->type, ['file', 'file_multiple'])) {
-                
-                $uploadedFiles = $customFields[$field->name] ?? null;
-
-                if (empty($uploadedFiles)) continue;
-
-                $files = is_array($uploadedFiles) ? $uploadedFiles : [$uploadedFiles];
+        foreach ($customFields as $key => $value) {
+            if (is_array($value)) {
                 $newPaths = [];
                 $filesMoved = false;
 
-                foreach ($files as $filePath) {
-                    if (str_contains($filePath, 'ticket-attachments/temp/')) {
-                        
+                foreach ($value as $filePath) {
+                    if (is_string($filePath) && str_contains($filePath, 'ticket-attachments/temp/')) {
                         $filename = basename($filePath);
                         $newPath = "ticket-attachments/{$record->id}/{$filename}";
 
@@ -49,7 +32,7 @@ class CreateTicket extends CreateRecord
                             $newPaths[] = $newPath;
                             $filesMoved = true;
                         } else {
-                            $newPaths[] = $filePath; 
+                            $newPaths[] = $filePath;
                         }
                     } else {
                         $newPaths[] = $filePath;
@@ -57,11 +40,16 @@ class CreateTicket extends CreateRecord
                 }
 
                 if ($filesMoved) {
-                    if ($field->type === 'file_multiple') {
-                        $customFields[$field->name] = $newPaths;
-                    } else {
-                        $customFields[$field->name] = head($newPaths);
-                    }
+                    $customFields[$key] = $newPaths;
+                    $hasChanges = true;
+                }
+            } elseif (is_string($value) && str_contains($value, 'ticket-attachments/temp/')) {
+                $filename = basename($value);
+                $newPath = "ticket-attachments/{$record->id}/{$filename}";
+
+                if ($disk->exists($value)) {
+                    $disk->move($value, $newPath);
+                    $customFields[$key] = $newPath;
                     $hasChanges = true;
                 }
             }

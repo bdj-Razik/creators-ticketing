@@ -25,7 +25,7 @@ class PublicTicketChat extends Component
     public function mount($ticketId)
     {
         $this->ticketId = $ticketId;
-        $this->ticket = Ticket::with(['department', 'status'])
+        $this->ticket = Ticket::with(['status'])
             ->where('id', $ticketId)
             ->where('user_id', auth()->id())
             ->firstOrFail();

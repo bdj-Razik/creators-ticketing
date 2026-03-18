@@ -13,7 +13,6 @@ use daacreators\CreatorsTicketing\Events\TicketDeleted;
 use daacreators\CreatorsTicketing\Events\TicketAssigned;
 use daacreators\CreatorsTicketing\Support\UserNameResolver;
 use daacreators\CreatorsTicketing\Events\TicketStatusChanged;
-use daacreators\CreatorsTicketing\Services\AutomationService;
 use daacreators\CreatorsTicketing\Events\TicketPriorityChanged;
 
 class TicketObserver
@@ -52,8 +51,6 @@ class TicketObserver
         ]);
 
         event(new TicketCreated($ticket, auth()->user()));
-
-        app(AutomationService::class)->processAutomations($ticket, 'ticket_created');
     }
 
     public function updating(Ticket $ticket): void
@@ -115,12 +112,6 @@ class TicketObserver
             $newAssigneeId = $ticket->assignee_id;
 
             event(new TicketAssigned($ticket, $oldAssigneeId, $newAssigneeId, auth()->user()));
-
-            $context = [
-                'old_assignee_id' => $oldAssigneeId,
-                'new_assignee_id' => $newAssigneeId,
-            ];
-            app(AutomationService::class)->processAutomations($ticket, 'ticket_assigned', $context);
         }
 
         if ($ticket->wasChanged('ticket_status_id')) {
@@ -135,12 +126,6 @@ class TicketObserver
             if ($newStatus && $newStatus->is_closing_status) {
                 event(new TicketClosed($ticket, auth()->user()));
             }
-            
-            $context = [
-                'old_status_id' => $oldStatusId,
-                'new_status_id' => $newStatusId,
-            ];
-            app(AutomationService::class)->processAutomations($ticket, 'status_changed', $context);
         }
 
         if ($ticket->wasChanged('priority')) {
@@ -149,16 +134,7 @@ class TicketObserver
             $newPriority = $ticket->priority;
 
             event(new TicketPriorityChanged($ticket, $oldPriority, $newPriority, auth()->user()));
-        
-            $context = [
-                'old_priority' => $oldPriorityVal, 
-                'new_priority' => $newPriority->value,
-            ];
-            app(AutomationService::class)->processAutomations($ticket, 'priority_changed', $context);
         }
-        
-        $changes = $ticket->getChanges();
-        app(AutomationService::class)->processAutomations($ticket, 'ticket_updated', $changes);
     }
 
     public function deleting(Ticket $ticket): void
