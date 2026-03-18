@@ -44,7 +44,7 @@ class Ticket extends Model
 
     public function requester(): BelongsTo
     {
-        $userModel = config('creators-ticketing.user_model', \App\Models\User::class);
+        $userModel = config('creators-ticketing.requester_model', \App\Models\User::class);
         return $this->belongsTo($userModel, 'requester_id');
     }
 
