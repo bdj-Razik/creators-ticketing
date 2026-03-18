@@ -25,13 +25,13 @@ class TicketChatMessages extends Component implements HasForms
     public function loadReplies()
     {
         $this->replies = $this->ticket->publicReplies()
-            ->with('user', 'ticket')
+            ->with('author', 'ticket')
             ->orderBy('created_at', 'asc')
             ->get();
 
         foreach ($this->replies as $reply) {
             if (!$reply->is_seen && auth()->check()) {
-                $reply->markSeenBy(auth()->id());
+                $reply->markSeenBy(auth()->user());
             }
         }
     }
