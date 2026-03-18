@@ -54,11 +54,6 @@ class Ticket extends Model
         return $this->belongsTo($userModel, 'assignee_id');
     }
 
-    public function department(): BelongsTo
-    {
-        return $this->belongsTo(Department::class);
-    }
-
     public function status(): BelongsTo
     {
         return $this->belongsTo(TicketStatus::class, 'ticket_status_id');
@@ -141,28 +136,18 @@ class Ticket extends Model
             return $query;
         }
 
-        $departmentIds = \DB::table(config('creators-ticketing.table_prefix') . 'department_users')
-            ->where('user_id', $userId)
-            ->pluck('department_id')
-            ->toArray();
-
-        if (empty($departmentIds)) {
-            return $query->where(function ($q) use ($userId) {
-                $q->where('user_id', $userId)
-                  ->orWhere('assignee_id', $userId);
-            });
-        }
-
-        $canViewAllDepartments = \DB::table(config('creators-ticketing.table_prefix') . 'department_users')
+        $hasViewAll = \DB::table(config('creators-ticketing.table_prefix') . 'department_users')
             ->where('user_id', $userId)
             ->where('can_view_all_tickets', true)
-            ->pluck('department_id')
-            ->toArray();
+            ->exists();
 
-        return $query->where(function ($q) use ($userId, $departmentIds, $canViewAllDepartments) {
+        if ($hasViewAll) {
+            return $query;
+        }
+
+        return $query->where(function ($q) use ($userId) {
             $q->where('user_id', $userId)
-              ->orWhere('assignee_id', $userId)
-              ->orWhereIn('department_id', $canViewAllDepartments);
+              ->orWhere('assignee_id', $userId);
         });
     }
 
@@ -170,27 +155,21 @@ class Ticket extends Model
     {
         return Attribute::make(
             get: function () {
-                $form = $this->department?->forms()->with('fields')->first();
-                
-                if (!$form || !$this->custom_fields) {
+                if (!$this->custom_fields) {
                     return 'Ticket #' . $this->ticket_uid;
                 }
 
-                $titleField = $form->fields->first(function ($field) {
-                    return in_array(strtolower($field->name), ['title', 'subject', 'issue_title', 'ticket_title']);
-                });
-
-                if ($titleField && isset($this->custom_fields[$titleField->name])) {
-                    return $this->custom_fields[$titleField->name];
+                $titleKeys = ['title', 'subject', 'issue_title', 'ticket_title'];
+                foreach ($titleKeys as $key) {
+                    if (isset($this->custom_fields[$key])) {
+                        return $this->custom_fields[$key];
+                    }
                 }
 
-                $firstTextField = $form->fields->first(function ($field) {
-                    return in_array($field->type, ['text', 'textarea']);
-                });
-
-                if ($firstTextField && isset($this->custom_fields[$firstTextField->name])) {
-                    $value = $this->custom_fields[$firstTextField->name];
-                    return is_string($value) ? substr(strip_tags($value), 0, 100) : 'Ticket #' . $this->ticket_uid;
+                foreach ($this->custom_fields as $value) {
+                    if (is_string($value) && strlen($value) > 0) {
+                        return substr(strip_tags($value), 0, 100);
+                    }
                 }
 
                 return 'Ticket #' . $this->ticket_uid;
@@ -202,26 +181,15 @@ class Ticket extends Model
     {
         return Attribute::make(
             get: function () {
-                $form = $this->department?->forms()->with('fields')->first();
-                
-                if (!$form || !$this->custom_fields) {
+                if (!$this->custom_fields) {
                     return '';
                 }
 
-                $contentField = $form->fields->first(function ($field) {
-                    return in_array(strtolower($field->name), ['content', 'description', 'details', 'message', 'issue_description']);
-                });
-
-                if ($contentField && isset($this->custom_fields[$contentField->name])) {
-                    return $this->custom_fields[$contentField->name];
-                }
-
-                $firstTextareaField = $form->fields->first(function ($field) {
-                    return $field->type === 'textarea';
-                });
-
-                if ($firstTextareaField && isset($this->custom_fields[$firstTextareaField->name])) {
-                    return $this->custom_fields[$firstTextareaField->name];
+                $contentKeys = ['content', 'description', 'details', 'message', 'issue_description'];
+                foreach ($contentKeys as $key) {
+                    if (isset($this->custom_fields[$key])) {
+                        return $this->custom_fields[$key];
+                    }
                 }
 
                 return '';

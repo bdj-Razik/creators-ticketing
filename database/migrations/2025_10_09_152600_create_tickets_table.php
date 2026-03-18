@@ -6,24 +6,29 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
     public function up(): void {
+
+        $requesterModel = config('creators-ticketing.requester_model', \App\Models\User::class);
+        $requesterInstance = new $requesterModel;
+        $requesterTable = $requesterInstance->getTable();
+        $requesterKey = $requesterInstance->getKeyName();
+
+
+
         $userModel = config('creators-ticketing.user_model', \App\Models\User::class);
         $userInstance = new $userModel;
         $userTable = $userInstance->getTable();
         $userKey = $userInstance->getKeyName();
 
-        Schema::create(config('creators-ticketing.table_prefix') . 'tickets', function (Blueprint $table) use ($userTable, $userKey) {
+        Schema::create(config('creators-ticketing.table_prefix') . 'tickets', function (Blueprint $table) use ($requesterTable, $requesterKey, $userTable, $userKey) {
             $table->id();
             $table->string('ticket_uid')->unique();
 
-            $table->unsignedBigInteger('user_id');
-            $table->foreign('user_id')
-                ->references($userKey)
-                ->on($userTable)
+            $table->unsignedBigInteger('requester_id');
+            $table->foreign('requester_id')
+                ->references($requesterKey)
+                ->on($requesterTable)
                 ->cascadeOnDelete();
 
-            $table->foreignId('department_id')
-                ->constrained(config('creators-ticketing.table_prefix') . 'departments')
-                ->cascadeOnDelete();
 
             $table->unsignedBigInteger('assignee_id')->nullable();
             $table->foreign('assignee_id')
