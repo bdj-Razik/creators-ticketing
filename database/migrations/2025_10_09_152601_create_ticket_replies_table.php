@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void {
    
-        Schema::create(config('creators-ticketing.table_prefix') . 'ticket_replies', function (Blueprint $table) use ($userTable, $userKey) {
+        Schema::create(config('creators-ticketing.table_prefix') . 'ticket_replies', function (Blueprint $table) use ($userKey) {
             $table->id();
 
             $table->foreignId('ticket_id')
