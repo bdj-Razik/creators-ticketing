@@ -4,7 +4,6 @@ namespace daacreators\CreatorsTicketing\Http\Controllers;
 
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Filament\Facades\Filament;
 use daacreators\CreatorsTicketing\Models\Ticket;
@@ -68,9 +67,7 @@ class TicketAttachmentController extends Controller
 
     private function userIsAgent($user)
     {
-        return DB::table(config('creators-ticketing.table_prefix') . 'department_users')
-            ->where('user_id', $user->getKey())
-            ->exists();
+        return $this->userIsSuperAdmin($user);
     }
 
     private function unauthorizedAccess($ticketId, $user = null)

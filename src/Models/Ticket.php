@@ -136,15 +136,6 @@ class Ticket extends Model
             return $query;
         }
 
-        $hasViewAll = \DB::table(config('creators-ticketing.table_prefix') . 'department_users')
-            ->where('user_id', $userId)
-            ->where('can_view_all_tickets', true)
-            ->exists();
-
-        if ($hasViewAll) {
-            return $query;
-        }
-
         return $query->where(function ($q) use ($userId) {
             $q->where('user_id', $userId)
               ->orWhere('assignee_id', $userId);

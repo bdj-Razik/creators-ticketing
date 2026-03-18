@@ -68,7 +68,7 @@ class TicketResource extends Resource
         if (!$user) {
             return false;
         }
-        return !empty($permissions['departments']) || $user->tickets()->exists();
+        return $user->tickets()->exists();
     }
 
     public static function canCreate(): bool

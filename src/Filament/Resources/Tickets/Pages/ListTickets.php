@@ -68,11 +68,7 @@ class ListTickets extends ListRecords
             return $this->getAdminTabs($user);
         }
 
-        if (empty($permissions['departments'])) {
-            return $this->getRequesterTabs($user);
-        }
-
-        return $this->getAgentTabs($user, $permissions);
+        return $this->getRequesterTabs($user);
     }
 
     protected function getAdminTabs($user): array
