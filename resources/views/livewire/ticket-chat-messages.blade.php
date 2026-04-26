@@ -46,67 +46,75 @@
     @keydown.arrow-right.window="if (imageModal) nextImage()"
     @keydown.arrow-left.window="if (imageModal) prevImage()"
 >
-    <div 
+    <div
         x-ref="chatContainer"
-        style="height:500px;overflow-y:auto;display:flex;flex-direction:column-reverse;padding:1.5rem;background:#000;border-radius:0.5rem;"
+        class="overflow-y-auto rounded-xl border border-gray-200 bg-gray-50 p-6"
+        style="height: 500px;"
     >
-        <div style="display:flex;flex-direction:column-reverse;gap:1rem;">
-            @foreach($replies->reverse() as $reply)
+        <div class="space-y-4">
+            @foreach($replies as $reply)
                 @php
                     $isRequester = $reply->author_id === $reply->ticket->requester_id;
-                    
+                    $authorTypeLabel = $isRequester ? 'Customer' : 'User';
+
                     preg_match_all('/<img[^>]+src="([^"]+)"[^>]*>/', $reply->content, $imageMatches);
                     $allImages = $imageMatches[1] ?? [];
                     $imageCount = count($allImages);
-                    
-                    $content = preg_replace_callback('/<img([^>]+)src="([^"]+)"([^>]*)>/', function($matches) use ($allImages, $imageCount) {
+
+                    $content = preg_replace_callback('/<img([^>]+)src="([^"]+)"([^>]*)>/', function ($matches) use ($allImages, $imageCount) {
                         $escapedUrl = str_replace("'", "\\'", $matches[2]);
                         $escapedImages = str_replace('"', '&quot;', json_encode($allImages));
-                        
+
                         $additionalStyles = '';
                         if ($imageCount > 1) {
                             $additionalStyles = 'border:2px solid #f59e0b;box-shadow:0 4px 6px -1px rgba(245, 158, 11, 0.3);';
                         }
-                        
+
                         return '<img ' . $matches[1] . 'src="' . $matches[2] . '" ' . $matches[3] . ' style="cursor:pointer;max-width:300px;border-radius:0.5rem;margin:0.5rem 0;display:block;' . $additionalStyles . '" x-on:click="openImage(\'' . $escapedUrl . '\', ' . $escapedImages . ')">';
                     }, $reply->content);
                 @endphp
 
-                <div wire:key="reply-{{ $reply->id }}" style="display:flex;align-items:end;gap:0.625rem;{{ $isRequester ? 'flex-direction:row;' : 'flex-direction:row-reverse;' }}">
-                    <div style="width:2.5rem;height:2.5rem;border-radius:9999px;background:#f43f5e;display:flex;align-items:center;justify-content:center;color:white;font-weight:600;font-size:0.875rem;flex-shrink:0;">
-                        {{ strtoupper(substr(daacreators\CreatorsTicketing\Support\UserNameResolver::resolve($reply->author) ?? 'U', 0, 1)) }}
-                    </div>
+                <div wire:key="reply-{{ $reply->id }}" class="flex {{ $isRequester ? 'justify-start' : 'justify-end' }}">
+                    <div class="flex max-w-[85%] items-end gap-3 sm:max-w-[75%] {{ $isRequester ? '' : 'flex-row-reverse' }}">
+                        <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white shadow-sm {{ $isRequester ? 'bg-rose-500' : 'bg-slate-700' }}">
+                            {{ strtoupper(substr(daacreators\CreatorsTicketing\Support\UserNameResolver::resolve($reply->author) ?? 'U', 0, 1)) }}
+                        </div>
 
-                    <div style="display:flex;flex-direction:column;gap:0.25rem;max-width:70%;{{ $isRequester ? 'align-items:start;' : 'align-items:end;' }}">
-                        <div style="padding:0.625rem 1rem;border-radius:1rem;{{ $isRequester ? 'background:#374151;color:white;border-top-right-radius:0.25rem;' : 'background:#047857;color:white;border-top-left-radius:0.25rem;' }}">
-                            <div style="font-size:0.875rem;word-break:break-word;position:relative;">
-                                {!! $content !!}
-                                @if($imageCount > 1)
-                                    <div style="position:absolute;top:0.5rem;right:0.5rem;background:rgba(0,0,0,0.7);color:white;padding:0.25rem 0.5rem;border-radius:1rem;font-size:0.75rem;font-weight:600;backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,0.2);">
-                                        {{ $imageCount }} <span style="font-size:0.625rem;">📷</span>
-                                    </div>
+                        <div class="flex flex-col {{ $isRequester ? 'items-start' : 'items-end' }}">
+                            <div class="rounded-2xl px-4 py-3 shadow-sm {{ $isRequester ? 'rounded-bl-sm border border-gray-200 bg-white text-gray-900' : 'rounded-br-sm bg-emerald-600 text-white' }}">
+                                <div class="relative max-w-none break-words text-sm leading-relaxed prose prose-sm {{ $isRequester ? '' : 'prose-invert' }}">
+                                    {!! $content !!}
+
+                                    @if($imageCount > 1)
+                                        <div class="absolute right-2 top-2 rounded-full border border-white/20 bg-black/70 px-2 py-1 text-[11px] font-semibold text-white backdrop-blur-sm">
+                                            {{ $imageCount }} images
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+
+                            <div class="mt-1 flex items-center gap-2 px-2 text-xs text-gray-500">
+                                <span class="font-medium">{{ $authorTypeLabel }}</span>
+                                <span class="text-gray-300">&bull;</span>
+                                @php
+                                    $now = \Carbon\Carbon::now();
+                                    $diffInMinutes = $reply->created_at->diffInMinutes($now);
+                                @endphp
+
+                                @if($diffInMinutes < 60)
+                                    {{ $reply->created_at->diffForHumans() }}
+                                @else
+                                    {{ $reply->created_at->format('M d, H:i') }}
                                 @endif
                             </div>
                         </div>
-                        <span style="font-size:0.75rem;color:#6b7280;padding:0 0.5rem;">
-                            @php
-                                $now = \Carbon\Carbon::now();
-                                $diffInMinutes = $reply->created_at->diffInMinutes($now);
-                            @endphp
-
-                            @if($diffInMinutes < 60)
-                                {{ $reply->created_at->diffForHumans() }}
-                            @else
-                                {{ $reply->created_at->format('M d, H:i') }}
-                            @endif
-                        </span>
                     </div>
                 </div>
             @endforeach
         </div>
     </div>
 
-    <div 
+    <div
         x-show="imageModal"
         x-transition:enter="transition ease-out duration-200"
         x-transition:enter-start="opacity-0"
@@ -118,46 +126,46 @@
         style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.95);display:flex;align-items:center;justify-content:center;z-index:9999;padding:2rem;"
         x-cloak
     >
-        <button 
+        <button
             @click.stop="closeImage()"
             style="position:absolute;top:2rem;right:2rem;width:3.5rem;height:3.5rem;background:rgba(255,255,255,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:2rem;cursor:pointer;border:2px solid rgba(255,255,255,0.3);backdrop-filter:blur(10px);transition:all 0.2s;z-index:10000;font-weight:300;"
             onmouseover="this.style.background='rgba(255,255,255,0.25)';this.style.transform='scale(1.1)';this.style.borderColor='rgba(255,255,255,0.5)'"
             onmouseout="this.style.background='rgba(255,255,255,0.15)';this.style.transform='scale(1)';this.style.borderColor='rgba(255,255,255,0.3)'"
         >
-            ×
+            &times;
         </button>
-        
+
         <template x-if="imageUrls.length > 1">
-            <button 
+            <button
                 @click.stop="prevImage()"
                 style="position:absolute;left:2rem;top:50%;transform:translateY(-50%);width:3.5rem;height:3.5rem;background:rgba(255,255,255,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:1.5rem;cursor:pointer;border:2px solid rgba(255,255,255,0.3);backdrop-filter:blur(10px);transition:all 0.2s;z-index:10000;font-weight:300;"
                 onmouseover="this.style.background='rgba(255,255,255,0.25)';this.style.transform='scale(1.1)';this.style.borderColor='rgba(255,255,255,0.5)'"
                 onmouseout="this.style.background='rgba(255,255,255,0.15)';this.style.transform='scale(1)';this.style.borderColor='rgba(255,255,255,0.3)'"
             >
-                ‹
+                &lsaquo;
             </button>
         </template>
-        
+
         <template x-if="imageUrls.length > 1">
-            <button 
+            <button
                 @click.stop="nextImage()"
                 style="position:absolute;right:2rem;top:50%;transform:translateY(-50%);width:3.5rem;height:3.5rem;background:rgba(255,255,255,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:1.5rem;cursor:pointer;border:2px solid rgba(255,255,255,0.3);backdrop-filter:blur(10px);transition:all 0.2s;z-index:10000;font-weight:300;"
                 onmouseover="this.style.background='rgba(255,255,255,0.25)';this.style.transform='scale(1.1)';this.style.borderColor='rgba(255,255,255,0.5)'"
                 onmouseout="this.style.background='rgba(255,255,255,0.15)';this.style.transform='scale(1)';this.style.borderColor='rgba(255,255,255,0.3)'"
             >
-                ›
+                &rsaquo;
             </button>
         </template>
-        
+
         <template x-if="imageUrls.length > 1">
             <div style="position:absolute;bottom:2rem;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);color:white;padding:0.5rem 1rem;border-radius:2rem;font-size:0.875rem;backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.2);">
                 <span x-text="currentImageIndex + 1"></span> / <span x-text="imageUrls.length"></span>
             </div>
         </template>
-        
+
         <div style="position:relative;display:flex;align-items:center;justify-content:center;width:100%;height:100%;">
-            <img 
-                :src="imageUrl" 
+            <img
+                :src="imageUrl"
                 @click.stop
                 style="max-width:100%;max-height:100%;object-fit:contain;border-radius:0.5rem;box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);"
                 x-transition:enter="transition ease-out duration-300 transform"
