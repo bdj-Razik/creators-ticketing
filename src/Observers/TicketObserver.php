@@ -45,10 +45,10 @@ class TicketObserver
 
     public function created(Ticket $ticket): void
     {
-        $ticket->activities()->create([
-            'user_id' => auth()->id(),
-            'description' => 'Ticket was created',
-        ]);
+        // $ticket->activities()->create([
+        //     'user_id' => auth()->id(),
+        //     'description' => 'Ticket was created',
+        // ]);
 
         event(new TicketCreated($ticket, auth()->user()));
     }
@@ -58,37 +58,37 @@ class TicketObserver
         if ($ticket->isDirty('assignee_id')) {
             $oldAssigneeId = $ticket->getOriginal('assignee_id');
             $newAssigneeId = $ticket->assignee_id;
-            
+
             $oldAssignee = $oldAssigneeId ? User::find($oldAssigneeId) : null;
             $newAssignee = $newAssigneeId ? User::find($newAssigneeId) : null;
 
-            $ticket->activities()->create([
-                'user_id' => auth()->id(),
-                'description' => 'Ticket was assigned',
-                'old_value' => $oldAssignee ? UserNameResolver::resolve($oldAssignee) : 'Unassigned',
-                'new_value' => $newAssignee ? UserNameResolver::resolve($newAssignee) : 'Unassigned',
-            ]);
+            // $ticket->activities()->create([
+            //     'user_id' => auth()->id(),
+            //     'description' => 'Ticket was assigned',
+            //     'old_value' => $oldAssignee ? UserNameResolver::resolve($oldAssignee) : 'Unassigned',
+            //     'new_value' => $newAssignee ? UserNameResolver::resolve($newAssignee) : 'Unassigned',
+            // ]);
         }
 
         if ($ticket->isDirty('ticket_status_id')) {
             $oldStatusId = $ticket->getOriginal('ticket_status_id');
             $newStatusId = $ticket->ticket_status_id;
-            
+
             $oldStatus = TicketStatus::find($oldStatusId);
             $newStatus = TicketStatus::find($newStatusId);
 
-            $ticket->activities()->create([
-                'user_id' => auth()->id(),
-                'description' => 'Status was changed',
-                'old_value' => $oldStatus?->name,
-                'new_value' => $newStatus?->name,
-            ]);
+            // $ticket->activities()->create([
+            //     'user_id' => auth()->id(),
+            //     'description' => 'Status was changed',
+            //     'old_value' => $oldStatus?->name,
+            //     'new_value' => $newStatus?->name,
+            // ]);
         }
 
         if ($ticket->isDirty('priority')) {
             $oldPriority = $ticket->getOriginal('priority');
             $newPriority = $ticket->priority;
-            
+
             if ($oldPriority instanceof TicketPriority) {
                 $oldPriority = $oldPriority->getLabel();
             }
@@ -96,12 +96,12 @@ class TicketObserver
                 $newPriority = $newPriority->getLabel();
             }
 
-            $ticket->activities()->create([
-                'user_id' => auth()->id(),
-                'description' => 'Priority was changed',
-                'old_value' => $oldPriority,
-                'new_value' => $newPriority,
-            ]);
+            // $ticket->activities()->create([
+            //     'user_id' => auth()->id(),
+            //     'description' => 'Priority was changed',
+            //     'old_value' => $oldPriority,
+            //     'new_value' => $newPriority,
+            // ]);
         }
     }
 
@@ -117,7 +117,7 @@ class TicketObserver
         if ($ticket->wasChanged('ticket_status_id')) {
             $oldStatusId = $ticket->getOriginal('ticket_status_id');
             $newStatusId = $ticket->ticket_status_id;
-            
+
             $oldStatus = $oldStatusId ? TicketStatus::find($oldStatusId) : null;
             $newStatus = TicketStatus::find($newStatusId);
 

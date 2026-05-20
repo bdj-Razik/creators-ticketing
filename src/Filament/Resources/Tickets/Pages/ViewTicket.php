@@ -44,7 +44,7 @@ class ViewTicket extends ViewRecord
     use HasTicketPermissions;
 
     protected static string $resource = TicketResource::class;
-    
+
     public ?array $replyData = [];
 
     public function mount(int | string $record): void
@@ -60,7 +60,7 @@ class ViewTicket extends ViewRecord
     public function changeStatus($statusId): void
     {
         $permissions = $this->getUserPermissions();
-        $canChangeStatus = $permissions['is_admin'] || 
+        $canChangeStatus = $permissions['is_admin'] ||
                            collect($permissions['permissions'])->contains(fn($p) => $p['can_change_status'] ?? false);
 
         if (!$canChangeStatus) {
@@ -69,16 +69,16 @@ class ViewTicket extends ViewRecord
         }
 
         $this->record->update(['ticket_status_id' => $statusId]);
-        
+
         Notification::make()->title(__('creators-ticketing::resources.ticket.notifications.status_updated'))->success()->send();
-        
+
         $this->dispatch('$refresh');
     }
 
     public function changePriority($priority): void
     {
         $permissions = $this->getUserPermissions();
-        $canChangePriority = $permissions['is_admin'] || 
+        $canChangePriority = $permissions['is_admin'] ||
                              collect($permissions['permissions'])->contains(fn($p) => $p['can_change_priority'] ?? false);
 
         if (!$canChangePriority) {
@@ -88,9 +88,9 @@ class ViewTicket extends ViewRecord
 
         $oldPriority = $this->record->priority;
         $this->record->update(['priority' => $priority]);
-        
+
         Notification::make()->title(__('creators-ticketing::resources.ticket.notifications.priority_updated'))->success()->send();
-        
+
         $this->dispatch('$refresh');
     }
 
@@ -98,8 +98,8 @@ class ViewTicket extends ViewRecord
     {
         $permissions = $this->getUserPermissions();
         $user = Filament::auth()->user();
-        
-        $canAssignTickets = $permissions['is_admin'] || 
+
+        $canAssignTickets = $permissions['is_admin'] ||
                             collect($permissions['permissions'])->contains(fn($p) => $p['can_assign_tickets'] ?? false);
 
         if (!$canAssignTickets) {
@@ -118,11 +118,11 @@ class ViewTicket extends ViewRecord
             'old_value' => $oldAssigneeId ? UserNameResolver::resolve(User::find($oldAssigneeId)) : 'Unassigned',
             'new_value' => $newAssigneeId ? UserNameResolver::resolve(User::find($newAssigneeId)) : 'Unassigned',
         ]);
-        
+
         $this->record->markSeenBy($user?->getKey());
 
         Notification::make()->title(__('creators-ticketing::resources.ticket.notifications.assigned'))->success()->send();
-        
+
         $this->dispatch('$refresh');
     }
 
@@ -131,11 +131,11 @@ class ViewTicket extends ViewRecord
         $permissions = $this->getUserPermissions();
         $user = Filament::auth()->user();
 
-        $canReplyToTickets = $permissions['is_admin'] || 
+        $canReplyToTickets = $permissions['is_admin'] ||
                             ($this->record->requester_id === $user->getKey() && config('creators-ticketing.allow_requester_to_reply', true)) ||
                             collect($permissions['permissions'])->contains(fn($p) => $p['can_reply_to_tickets'] ?? false);
-        
-        $canAddInternalNotes = $permissions['is_admin'] || 
+
+        $canAddInternalNotes = $permissions['is_admin'] ||
                             collect($permissions['permissions'])->contains(fn($p) => $p['can_add_internal_notes'] ?? false);
 
         if (!$canReplyToTickets) {
@@ -148,7 +148,7 @@ class ViewTicket extends ViewRecord
         }
 
         $data = $this->replyData ?? [];
-        
+
         if (empty(($data['content'] ?? ''))) {
             Notification::make()
                 ->title(__('creators-ticketing::resources.ticket.notifications.reply_empty'))
@@ -178,7 +178,7 @@ class ViewTicket extends ViewRecord
 
         if ($data['is_internal_note'] ?? false) {
             event(new InternalNoteAdded($this->record, $reply));
-            $this->dispatch('internal-note-created'); 
+            $this->dispatch('internal-note-created');
         } else {
             event(new TicketReplyAdded($this->record, $reply));
         }
@@ -195,38 +195,38 @@ class ViewTicket extends ViewRecord
     protected function moveTempFilesToPermanentStorage(string $html): string
     {
         $pattern = '/<img[^>]+src=["\']([^"\']*livewire\/preview-file\/[^"\']+)["\']([^>]*)>/i';
-        
+
         return preg_replace_callback($pattern, function ($matches) {
             $fullTag = $matches[0];
             $tempUrl = html_entity_decode($matches[1]);
             $otherAttributes = $matches[2];
-            
+
             if (preg_match('/preview-file\/([^\?]+)/', $tempUrl, $fileMatches)) {
                 $tempFileKey = urldecode($fileMatches[1]);
-                
+
                 try {
                     $tempFile = TemporaryUploadedFile::createFromLivewire($tempFileKey);
-                    
+
                     if ($tempFile) {
                         $originalFilename = $this->getOriginalFilename($tempFileKey);
                         $extension = pathinfo($originalFilename, PATHINFO_EXTENSION) ?: 'png';
-                        
+
                         $filename = uniqid() . '_' . time() . '.' . $extension;
                         $storagePath = "ticket-attachments/{$this->record->id}/{$filename}";
-                        
+
                         Storage::disk('private')->put(
                             $storagePath,
                             $tempFile->get()
                         );
-                        
+
                         $permanentUrl = url('/private/ticket-attachments/' . $this->record->id . '/' . $filename);
-                        
+
                         return '<img src="' . $permanentUrl . '"' . $otherAttributes . '>';
                     }
                 } catch (\Exception $e) {
                 }
             }
-            
+
             return $fullTag;
         }, $html);
     }
@@ -238,7 +238,7 @@ class ViewTicket extends ViewRecord
             $decoded = base64_decode($encoded);
             return $decoded ?: 'file.png';
         }
-        
+
         return 'file.png';
     }
 
@@ -247,72 +247,72 @@ class ViewTicket extends ViewRecord
         if (!isset($tiptapContent['content']) || !is_array($tiptapContent['content'])) {
             return '';
         }
-        
+
         $html = '';
-        
+
         foreach ($tiptapContent['content'] as $block) {
             $html .= $this->processTiptapBlock($block);
         }
-        
+
         return $html;
     }
 
     protected function processTiptapBlock(array $block): string
     {
         $type = $block['type'] ?? '';
-        
+
         switch ($type) {
             case 'paragraph':
                 $content = $this->processTiptapInlineContent($block['content'] ?? []);
                 return "<p>{$content}</p>";
-                
+
             case 'heading':
                 $level = $block['attrs']['level'] ?? 2;
                 $content = $this->processTiptapInlineContent($block['content'] ?? []);
                 return "<h{$level}>{$content}</h{$level}>";
-                
+
             case 'bulletList':
                 $items = array_map(fn($item) => $this->processTiptapBlock($item), $block['content'] ?? []);
                 return '<ul>' . implode('', $items) . '</ul>';
-                
+
             case 'orderedList':
                 $items = array_map(fn($item) => $this->processTiptapBlock($item), $block['content'] ?? []);
                 return '<ol>' . implode('', $items) . '</ol>';
-                
+
             case 'listItem':
                 $content = array_map(fn($item) => $this->processTiptapBlock($item), $block['content'] ?? []);
                 return '<li>' . implode('', $content) . '</li>';
-                
+
             case 'image':
                 $src = $block['attrs']['src'] ?? '';
                 $alt = $block['attrs']['alt'] ?? '';
                 $title = $block['attrs']['title'] ?? '';
                 return "<img src=\"{$src}\" alt=\"{$alt}\" title=\"{$title}\">";
-                
+
             case 'codeBlock':
                 $content = $this->processTiptapInlineContent($block['content'] ?? []);
                 return "<pre><code>{$content}</code></pre>";
-                
+
             case 'blockquote':
                 $content = array_map(fn($item) => $this->processTiptapBlock($item), $block['content'] ?? []);
                 return '<blockquote>' . implode('', $content) . '</blockquote>';
-                
+
             case 'table':
                 $rows = array_map(fn($item) => $this->processTiptapBlock($item), $block['content'] ?? []);
                 return '<table>' . implode('', $rows) . '</table>';
-                
+
             case 'tableRow':
                 $cells = array_map(fn($item) => $this->processTiptapBlock($item), $block['content'] ?? []);
                 return '<tr>' . implode('', $cells) . '</tr>';
-                
+
             case 'tableHeader':
                 $content = array_map(fn($item) => $this->processTiptapBlock($item), $block['content'] ?? []);
                 return '<th>' . implode('', $content) . '</th>';
-                
+
             case 'tableCell':
                 $content = array_map(fn($item) => $this->processTiptapBlock($item), $block['content'] ?? []);
                 return '<td>' . implode('', $content) . '</td>';
-                
+
             default:
                 return '';
         }
@@ -321,14 +321,14 @@ class ViewTicket extends ViewRecord
     protected function processTiptapInlineContent(array $content): string
     {
         $html = '';
-        
+
         foreach ($content as $item) {
             $type = $item['type'] ?? '';
-            
+
             if ($type === 'text') {
                 $text = htmlspecialchars($item['text'] ?? '', ENT_QUOTES, 'UTF-8');
                 $marks = $item['marks'] ?? [];
-                
+
                 foreach ($marks as $mark) {
                     switch ($mark['type']) {
                         case 'bold':
@@ -359,7 +359,7 @@ class ViewTicket extends ViewRecord
                             break;
                     }
                 }
-                
+
                 $html .= $text;
             } elseif ($type === 'image') {
                 $src = htmlspecialchars($item['attrs']['src'] ?? '', ENT_QUOTES, 'UTF-8');
@@ -369,28 +369,28 @@ class ViewTicket extends ViewRecord
                 $html .= '<br>';
             }
         }
-        
+
         return $html;
     }
 
     protected function getLastActivityDescription($record): string
     {
         $lastActivity = $record->activities()->latest()->first();
-        
+
         if (!$lastActivity) {
             return 'No activity recorded';
         }
-        
+
         $description = $lastActivity->description;
         $time = $lastActivity->created_at->format('M d, Y, H:i:s');
-        
+
         return strtolower($description) . ' on ' . $time;
     }
 
     protected function getCustomFieldsDisplay(): array
     {
         $customFields = $this->record->custom_fields ?? [];
-        
+
         if (empty($customFields)) {
             return [];
         }
@@ -422,7 +422,7 @@ class ViewTicket extends ViewRecord
                 )->key(fn() => 'files-' . $this->record->id . '-' . $key);
             } else {
                 $formattedValue = is_array($value) ? implode(', ', $value) : (is_bool($value) ? ($value ? __('creators-ticketing::resources.ticket.yes') : __('creators-ticketing::resources.ticket.no')) : (string) $value);
-                
+
                 $entries[] = TextEntry::make("custom_field_{$key}")
                     ->label(str($key)->headline()->toString())
                     ->state($formattedValue)
@@ -438,20 +438,20 @@ class ViewTicket extends ViewRecord
         $permissions = $this->getUserPermissions();
         $user = Filament::auth()->user();
 
-        $canReplyToTickets = $permissions['is_admin'] || 
+        $canReplyToTickets = $permissions['is_admin'] ||
                              ($this->record->requester_id === $user->getKey() && config('creators-ticketing.allow_requester_to_reply', true)) ||
                              collect($permissions['permissions'])->contains(fn($p) => $p['can_reply_to_tickets'] ?? false);
-        
-        $canAddInternalNotes = $permissions['is_admin'] || 
+
+        $canAddInternalNotes = $permissions['is_admin'] ||
                                collect($permissions['permissions'])->contains(fn($p) => $p['can_add_internal_notes'] ?? false);
 
-        $canViewInternalNotes = $permissions['is_admin'] || 
+        $canViewInternalNotes = $permissions['is_admin'] ||
                                collect($permissions['permissions'])->contains(fn($p) => $p['can_view_internal_notes'] ?? false);
 
         return $schema
             ->schema([
                 Tabs::make('Tabs')
-                    ->id('ticket-view-tabs') 
+                    ->id('ticket-view-tabs')
                     ->tabs([
                         Tab::make(__('creators-ticketing::resources.ticket.ticket_view'))
                             ->icon('heroicon-o-ticket')
@@ -470,12 +470,12 @@ class ViewTicket extends ViewRecord
                                                             ->weight(FontWeight::Bold),
                                                     ])
                                                     ->columnStart(1),
-                                                
+
                                                 Group::make()
                                                     ->schema([
                                                         TextEntry::make('Status')
-                                                            ->formatStateUsing(fn ($record) => 
-                                                                $record->status?->name ? 
+                                                            ->formatStateUsing(fn ($record) =>
+                                                                $record->status?->name ?
                                                                     "<span style='
                                                                         display: inline-flex;
                                                                         align-items: center;
@@ -488,7 +488,7 @@ class ViewTicket extends ViewRecord
                                                                         line-height: 1;
                                                                         border: 1.5px solid {$record->status->color};
                                                                         white-space: nowrap;
-                                                                    '>{$record->status->name}</span>" 
+                                                                    '>{$record->status->name}</span>"
                                                                 : ''
                                                             )
                                                             ->html(),
@@ -497,17 +497,17 @@ class ViewTicket extends ViewRecord
                                                     ])
                                                     ->columns(2)
                                                     ->columnStart(3),
-                                                
+
                                             ])
                                             ->columns(2)
                                             ->heading(false),
-                                        
+
                                         Section::make(__('creators-ticketing::resources.ticket.form_data'))
                                             ->schema(fn() => $this->getCustomFieldsDisplay())
                                             ->columns(2)
                                             ->visible(fn() => count($this->getCustomFieldsDisplay()) > 0)
                                             ->collapsible(),
-                                        
+
                                         Section::make()
                                             ->schema([
                                                 Group::make()
@@ -516,7 +516,7 @@ class ViewTicket extends ViewRecord
                                                             ->key(fn() => 'chat-' . $this->record->id),
                                                     ])
                                                     ->visible(fn($record) => $record->publicReplies()->exists() || $canViewInternalNotes),
-                                                
+
                                                 Group::make()
                                                     ->schema([
                                                         SchemaForm::make([
@@ -565,7 +565,7 @@ class ViewTicket extends ViewRecord
                                             ->compact(false),
                                     ])
                                     ->columnSpan(['lg' => 2]),
-                                
+
                                 Group::make()
                                     ->schema([
                                         Section::make(__('creators-ticketing::resources.ticket.details'))
@@ -575,26 +575,26 @@ class ViewTicket extends ViewRecord
                                                     ->label(__('creators-ticketing::resources.ticket.ticket_no'))
                                                     ->copyable()
                                                     ->icon('heroicon-o-hashtag'),
-                                                
+
                                                 TextEntry::make('created_at')
                                                     ->label(__('creators-ticketing::resources.ticket.created_at'))
                                                     ->dateTime('M d, Y H:i:s')
                                                     ->icon('heroicon-o-clock')
                                                     ->color('success'),
-                                                
+
                                                 TextEntry::make('updated_at')
                                                     ->label(__('creators-ticketing::resources.ticket.updated_at'))
                                                     ->dateTime('M d, Y H:i:s')
                                                     ->icon('heroicon-o-clock')
                                                     ->color('success'),
-                                                
+
                                                 TextEntry::make('assignee')
                                                     ->label(__('creators-ticketing::resources.ticket.assignee'))
                                                     ->formatStateUsing(fn ($record) => $record->assignee ? UserNameResolver::resolve($record->assignee) : __('creators-ticketing::resources.ticket.unassigned'))
                                                     ->default(__('creators-ticketing::resources.ticket.unassigned'))
                                                     ->icon('heroicon-o-user-plus')
                                                     ->color('success'),
-                                                
+
                                                 TextEntry::make('last_activity_at')
                                                     ->label(__('creators-ticketing::resources.ticket.last_activity'))
                                                     ->formatStateUsing(fn($record) => $this->getLastActivityDescription($record))
@@ -604,34 +604,34 @@ class ViewTicket extends ViewRecord
                                             ])
                                             ->compact()
                                             ->collapsible(),
-                                        
-                                        Section::make(__('creators-ticketing::resources.ticket.recent_activities'))
-                                            ->icon('heroicon-o-clock')
-                                            ->description(__('creators-ticketing::resources.ticket.latest_activities'))
-                                            ->schema([
-                                                 Livewire::make(TicketTimeline::class, [
-                                                    'ticket' => $this->record,
-                                                    'limit' => 5
-                                                ])->key(fn() => 'timeline-preview-' . $this->record->id),
-                                            ])
-                                            ->collapsed()
-                                            ->collapsible(),
+
+                                        // Section::make(__('creators-ticketing::resources.ticket.recent_activities'))
+                                        //     ->icon('heroicon-o-clock')
+                                        //     ->description(__('creators-ticketing::resources.ticket.latest_activities'))
+                                        //     ->schema([
+                                        //          Livewire::make(TicketTimeline::class, [
+                                        //             'ticket' => $this->record,
+                                        //             'limit' => 5
+                                        //         ])->key(fn() => 'timeline-preview-' . $this->record->id),
+                                        //     ])
+                                        //     ->collapsed()
+                                        //     ->collapsible(),
                                     ])
                                     ->columnSpan(['lg' => 1]),
                             ])
                             ->columns(3),
-                        
-                        Tab::make(__('creators-ticketing::resources.ticket.full_timeline'))
-                            ->icon('heroicon-o-clock')
-                            ->schema([
-                                Section::make(__('creators-ticketing::resources.ticket.activity_timeline'))
-                                    ->icon('heroicon-o-clock')
-                                    ->description(__('creators-ticketing::resources.ticket.activities_history'))
-                                    ->schema([
-                                        Livewire::make(TicketTimeline::class, ['ticket' => $this->record])
-                                            ->key(fn() => 'timeline-full-' . $this->record->id),
-                                    ]),
-                            ]),
+
+                        // Tab::make(__('creators-ticketing::resources.ticket.full_timeline'))
+                        //     ->icon('heroicon-o-clock')
+                        //     ->schema([
+                        //         Section::make(__('creators-ticketing::resources.ticket.activity_timeline'))
+                        //             ->icon('heroicon-o-clock')
+                        //             ->description(__('creators-ticketing::resources.ticket.activities_history'))
+                        //             ->schema([
+                        //                 Livewire::make(TicketTimeline::class, ['ticket' => $this->record])
+                        //                     ->key(fn() => 'timeline-full-' . $this->record->id),
+                        //             ]),
+                        //     ]),
                     ])
                     ->columnSpanFull()
                     ->persistTab()
@@ -642,19 +642,19 @@ class ViewTicket extends ViewRecord
     protected function getHeaderActions(): array
     {
         $permissions = $this->getUserPermissions();
-        
+
         $userModel = config('creators-ticketing.user_model', \App\Models\User::class);
 
-        $canChangeStatus = $permissions['is_admin'] || 
+        $canChangeStatus = $permissions['is_admin'] ||
                            collect($permissions['permissions'])->contains(fn($p) => $p['can_change_status'] ?? false);
-        
-        $canChangePriority = $permissions['is_admin'] || 
+
+        $canChangePriority = $permissions['is_admin'] ||
                              collect($permissions['permissions'])->contains(fn($p) => $p['can_change_priority'] ?? false);
 
-        $canAssignTickets = $permissions['is_admin'] || 
+        $canAssignTickets = $permissions['is_admin'] ||
                             collect($permissions['permissions'])->contains(fn($p) => $p['can_assign_tickets'] ?? false);
-        
-        $canDeleteTickets = $permissions['is_admin'] || 
+
+        $canDeleteTickets = $permissions['is_admin'] ||
                             collect($permissions['permissions'])->contains(fn($p) => $p['can_delete_tickets'] ?? false);
 
         $statusActions = [];
@@ -682,14 +682,14 @@ class ViewTicket extends ViewRecord
                 ->color('gray')
                 ->button()
                 ->visible(fn() => $canChangeStatus),
-            
+
             ActionGroup::make($priorityActions)
                 ->label(__('creators-ticketing::resources.ticket.actions.change_priority'))
                 ->icon('heroicon-o-flag')
                 ->color('gray')
                 ->button()
                 ->visible(fn() => $canChangePriority),
-            
+
             Action::make('assignTicket')
                 ->label(__('creators-ticketing::resources.ticket.actions.assign'))
                 ->icon('heroicon-o-user-plus')
@@ -722,7 +722,7 @@ class ViewTicket extends ViewRecord
                 ->action(function (array $data) {
                     $this->assignTicket($data['assignee']);
                 }),
-            
+
             Action::make('delete')
                 ->label(__('creators-ticketing::resources.ticket.actions.delete'))
                 ->icon('heroicon-o-trash')
@@ -739,7 +739,7 @@ class ViewTicket extends ViewRecord
     public function getRelationManagers(): array
     {
         $permissions = $this->getUserPermissions();
-        $canViewInternalNotes = $permissions['is_admin'] || 
+        $canViewInternalNotes = $permissions['is_admin'] ||
                                collect($permissions['permissions'])->contains(fn($p) => $p['can_view_internal_notes'] ?? false);
 
         if ($canViewInternalNotes) {
