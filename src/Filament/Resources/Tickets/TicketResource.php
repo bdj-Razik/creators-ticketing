@@ -17,6 +17,8 @@ use Filament\Schemas\Components;
 use Filament\Actions\BulkActionGroup;
 use Filament\Forms\Components\Select;
 use Filament\Actions\DeleteBulkAction;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Group;
 use Filament\Tables\Columns\TextColumn;
 use Illuminate\Database\Eloquent\Model;
@@ -28,6 +30,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Filament\Infolists\Components\TextEntry;
 use daacreators\CreatorsTicketing\Models\Ticket;
 use daacreators\CreatorsTicketing\Enums\TicketPriority;
+use daacreators\CreatorsTicketing\Models\TicketStatus;
 use Filament\Infolists\Components\Section as InfoSection;
 use daacreators\CreatorsTicketing\Support\UserNameResolver;
 use daacreators\CreatorsTicketing\Traits\HasTicketingNavGroup;
@@ -142,17 +145,37 @@ class TicketResource extends Resource
         $permissions = (new static)->getUserPermissions();
         $requesterModel = config('creators-ticketing.requester_model', \App\Models\User::class);
         $userModel = config('creators-ticketing.user_model', \App\Models\User::class);
+        $canAssignTickets = $permissions['is_admin'] || collect($permissions['permissions'])->contains(fn($p) => $p['can_assign_tickets'] ?? false);
+        $canChangeStatus = $permissions['is_admin'] || collect($permissions['permissions'])->contains(fn($p) => $p['can_change_status'] ?? false);
+        $canChangePriority = $permissions['is_admin'] || collect($permissions['permissions'])->contains(fn($p) => $p['can_change_priority'] ?? false);
 
         return $schema->schema([
+            Group::make()->schema([
+                Section::make(__('creators-ticketing::resources.ticket.details'))
+                    ->schema([
+                        TextInput::make('custom_fields.subject')
+                            ->label(__('creators-ticketing::resources.ticket.title_field'))
+                            ->required()
+                            ->maxLength(255),
 
-            
+                        Textarea::make('custom_fields.description')
+                            ->label(__('creators-ticketing::resources.form.description'))
+                            ->required()
+                            ->rows(10)
+                            ->autosize()
+                            ->columnSpanFull(),
+                    ]),
+            ])->columnSpan(['lg' => 2]),
+
             Group::make()->schema([
                 Section::make(__('creators-ticketing::resources.ticket.properties'))
                     ->schema([
                         Select::make('requester_id')
                             ->label(__('creators-ticketing::resources.ticket.requester'))
+                            ->default(fn () => $permissions['is_admin'] ? null : Filament::auth()->id())
                             ->searchable()
                             ->required()
+                            ->native(false)
                             ->getSearchResultsUsing(function (string $search) use ($requesterModel) {
                                 $nameColumn = config('creators-ticketing.requester_name_column', 'name');
                                 return $requesterModel::where($nameColumn, 'like', "%{$search}%")
@@ -165,15 +188,13 @@ class TicketResource extends Resource
                                 $user = $requesterModel::find($value);
                                 return $user ? UserNameResolver::resolve($user) . ' - ' . $user->email : null;
                             })
-                            ->visible(fn (?Model $record) => 
-                                $permissions['is_admin'] || 
-                                ($record === null && collect($permissions['permissions'])->contains(fn($p) => $p['can_assign_tickets'] ?? false))
-                            )
+                            ->visible(fn (?Model $record) => $permissions['is_admin'] || ($record === null && $canAssignTickets))
                             ->disabled(fn (?Model $record) => $record instanceof Ticket && !$permissions['is_admin']),
                         
                         Select::make('assignee_id')
                             ->label(__('creators-ticketing::resources.ticket.assignee'))
                             ->searchable()
+                            ->native(false)
                             ->getSearchResultsUsing(function (string $search) use ($userModel) {
                                 $nameColumn = config('creators-ticketing.user_name_column', 'name');
                                 return $userModel::where($nameColumn, 'like', "%{$search}%")
@@ -187,28 +208,23 @@ class TicketResource extends Resource
                                 return $user ? UserNameResolver::resolve($user) . ' - ' . $user->email : null;
                             })
                             ->preload(false)
-                            ->native(false)
-                            ->visible(fn (?Model $record) => 
-                                $permissions['is_admin'] || 
-                                collect($permissions['permissions'])->contains(fn($p) => $p['can_assign_tickets'] ?? false)
-                            )
+                            ->visible(fn (?Model $record) => $permissions['is_admin'] || $canAssignTickets)
                             ->disabled(fn (?Model $record) => 
                                 $record instanceof Ticket && !$permissions['is_admin'] && 
-                                !collect($permissions['permissions'])->contains(fn($p) => $p['can_assign_tickets'] ?? false)
+                                !$canAssignTickets
                             ),
-                        
- 
-                        
+
                         Select::make('ticket_status_id')
                             ->label(__('creators-ticketing::resources.ticket.status'))
                             ->relationship('status', 'name')
-                            ->visible(fn (?Model $record) => 
-                                $permissions['is_admin'] || 
-                                collect($permissions['permissions'])->contains(fn($p) => $p['can_change_status'] ?? false)
-                            )
+                            ->default(fn () => TicketStatus::query()->where('is_default_for_new', true)->value('id'))
+                            ->preload()
+                            ->searchable()
+                            ->native(false)
+                            ->visible(fn (?Model $record) => $permissions['is_admin'] || $canChangeStatus)
                             ->disabled(fn (?Model $record) => 
                                 $record instanceof Ticket && !$permissions['is_admin'] && 
-                                !collect($permissions['permissions'])->contains(fn($p) => $p['can_change_status'] ?? false)
+                                !$canChangeStatus
                             ),
                         
                         Select::make('priority')
@@ -217,17 +233,15 @@ class TicketResource extends Resource
                             ->enum(TicketPriority::class)
                             ->required()
                             ->default(TicketPriority::LOW)
-                            ->visible(fn (?Model $record) => 
-                                $permissions['is_admin'] || 
-                                collect($permissions['permissions'])->contains(fn($p) => $p['can_change_priority'] ?? false)
-                            )
+                            ->native(false)
+                            ->visible(fn (?Model $record) => $permissions['is_admin'] || $canChangePriority)
                             ->disabled(fn (?Model $record) => 
                                 $record instanceof Ticket && !$permissions['is_admin'] && 
-                                !collect($permissions['permissions'])->contains(fn($p) => $p['can_change_priority'] ?? false)
+                                !$canChangePriority
                             ),
                     ]),
-            ])->columnSpan(1),
-            ])->columns(3);
+            ])->columnSpan(['lg' => 1]),
+        ])->columns(3);
     }
 
     public static function infolist(Schema $schema): Schema
