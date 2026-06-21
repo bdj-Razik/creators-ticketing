@@ -335,6 +335,7 @@ class TicketResource extends Resource
         $user = Filament::auth()->user();
 
         return $table
+            ->defaultSort('last_activity_at', 'desc')
             ->modifyQueryUsing(function (Builder $query) use ($permissions, $user) {
                 if (!$user) {
                     $query->whereRaw('1 = 0');
